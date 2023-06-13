@@ -21,7 +21,7 @@
             <id>sk89q-repo</id>
             <url>https://maven.enginehub.org/repo/</url>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
         <repository>
@@ -111,7 +111,7 @@
         </dependency>
         <dependency>
             <groupId>com.magmaguy</groupId>
-            <artifactId>EliteMobs</artifactId>
+            <artifactId>elitemobs</artifactId>
             <version>8.3.13</version>
         </dependency>
         <dependency>
