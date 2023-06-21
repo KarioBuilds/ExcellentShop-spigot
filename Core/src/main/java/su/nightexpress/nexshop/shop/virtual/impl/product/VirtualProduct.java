@@ -5,17 +5,17 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import su.nexmedia.engine.api.config.JYML;
 import su.nightexpress.nexshop.ShopAPI;
-import su.nightexpress.nexshop.api.IScheduled;
-import su.nightexpress.nexshop.api.currency.ICurrency;
+import su.nightexpress.nexshop.api.currency.Currency;
 import su.nightexpress.nexshop.api.shop.CommandProduct;
 import su.nightexpress.nexshop.api.shop.ItemProduct;
 import su.nightexpress.nexshop.api.shop.Product;
 import su.nightexpress.nexshop.api.shop.ProductPricer;
 import su.nightexpress.nexshop.api.type.StockType;
 import su.nightexpress.nexshop.api.type.TradeType;
-import su.nightexpress.nexshop.currency.CurrencyId;
-import su.nightexpress.nexshop.shop.FlatProductPricer;
-import su.nightexpress.nexshop.shop.FloatProductPricer;
+import su.nightexpress.nexshop.currency.CurrencyManager;
+import su.nightexpress.nexshop.shop.util.TimeUtils;
+import su.nightexpress.nexshop.shop.price.FlatProductPricer;
+import su.nightexpress.nexshop.shop.price.FloatProductPricer;
 import su.nightexpress.nexshop.shop.virtual.editor.menu.ProductMainEditor;
 import su.nightexpress.nexshop.shop.virtual.impl.shop.VirtualShop;
 
@@ -28,7 +28,7 @@ public abstract class VirtualProduct extends Product<VirtualProduct, VirtualShop
 
     private ProductMainEditor editor;
 
-    public VirtualProduct(@NotNull String id, @NotNull ICurrency currency) {
+    public VirtualProduct(@NotNull String id, @NotNull Currency currency) {
         super(id, currency);
     }
 
@@ -49,8 +49,8 @@ public abstract class VirtualProduct extends Product<VirtualProduct, VirtualShop
                 pricer.setPriceMax(TradeType.BUY, buyMax);
                 pricer.setPriceMin(TradeType.SELL, sellMin);
                 pricer.setPriceMin(TradeType.SELL, sellMax);
-                pricer.setDays(IScheduled.parseDays(cfg.getString(path + ".Purchase.Randomizer.Times.Days", "")));
-                pricer.setTimes(IScheduled.parseTimesOld(cfg.getStringList(path + ".Purchase.Randomizer.Times.Times")));
+                pricer.setDays(TimeUtils.parseDays(cfg.getString(path + ".Purchase.Randomizer.Times.Days", "")));
+                pricer.setTimes(TimeUtils.parseTimesOld(cfg.getStringList(path + ".Purchase.Randomizer.Times.Times")));
                 cfg.addMissing(path + ".Price.Type", pricer.getType().name());
                 pricer.write(cfg, path + ".Price");
             }
@@ -92,8 +92,8 @@ public abstract class VirtualProduct extends Product<VirtualProduct, VirtualShop
         cfg.saveChanges();
         // ------------ OLD DATA END ------------
 
-        String currencyId = cfg.getString(path + ".Currency", CurrencyId.VAULT);
-        ICurrency currency = ShopAPI.getCurrencyManager().getCurrency(currencyId);
+        String currencyId = cfg.getString(path + ".Currency", CurrencyManager.VAULT);
+        Currency currency = ShopAPI.getCurrencyManager().getCurrency(currencyId);
         if (currency == null) {
             throw new IllegalStateException("Invalid currency!");
         }

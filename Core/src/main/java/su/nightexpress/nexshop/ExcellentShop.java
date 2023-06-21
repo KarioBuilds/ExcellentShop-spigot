@@ -12,26 +12,27 @@ import su.nightexpress.nexshop.command.currency.CurrencyMainCommand;
 import su.nightexpress.nexshop.config.Config;
 import su.nightexpress.nexshop.config.Lang;
 import su.nightexpress.nexshop.currency.CurrencyManager;
-import su.nightexpress.nexshop.data.ShopDataHandler;
-import su.nightexpress.nexshop.data.ShopUserManager;
+import su.nightexpress.nexshop.data.DataHandler;
+import su.nightexpress.nexshop.data.UserManager;
 import su.nightexpress.nexshop.data.user.ShopUser;
-import su.nightexpress.nexshop.hooks.HookId;
-import su.nightexpress.nexshop.module.ModuleManager;
-import su.nightexpress.nexshop.shop.PriceUpdateTask;
+import su.nightexpress.nexshop.hook.HookId;
 import su.nightexpress.nexshop.shop.auction.AuctionManager;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
 import su.nightexpress.nexshop.shop.chest.compatibility.WorldGuardFlags;
 import su.nightexpress.nexshop.shop.menu.ShopCartMenu;
+import su.nightexpress.nexshop.shop.price.PriceUpdateTask;
 import su.nightexpress.nexshop.shop.virtual.VirtualShopModule;
 
 public class ExcellentShop extends NexPlugin<ExcellentShop> implements UserDataHolder<ExcellentShop, ShopUser> {
 
-    private ShopDataHandler dataHandler;
-    private ShopUserManager userManager;
+    private DataHandler dataHandler;
+    private UserManager userManager;
 
     private ShopCartMenu    cartMenu;
     private CurrencyManager currencyManager;
-    private ModuleManager   moduleManager;
+    private VirtualShopModule virtualShop;
+    private ChestShopModule chestShop;
+    private AuctionManager auction;
 
     private PriceUpdateTask priceUpdateTask;
 
@@ -56,9 +57,23 @@ public class ExcellentShop extends NexPlugin<ExcellentShop> implements UserDataH
         this.currencyManager = new CurrencyManager(this);
         this.currencyManager.setup();
 
-        this.moduleManager = new ModuleManager(this);
-        this.moduleManager.setup();
-        this.moduleManager.loadModules();
+        if (!this.currencyManager.hasCurrency()) {
+            this.error("No currencies are available! Plugin will be disabled.");
+            return;
+        }
+
+        if (Config.MODULES_VIRTUAL_SHOP_ENABLED.get()) {
+            this.virtualShop = new VirtualShopModule(this);
+            this.virtualShop.setup();
+        }
+        if (Config.MODULES_CHEST_SHOP_ENABLED.get()) {
+            this.chestShop = new ChestShopModule(this);
+            this.chestShop.setup();
+        }
+        if (Config.MODULES_AUCTION_ENABLED.get()) {
+            this.auction = new AuctionManager(this);
+            this.auction.setup();
+        }
 
         this.priceUpdateTask = new PriceUpdateTask(this);
         this.priceUpdateTask.start();
@@ -71,9 +86,17 @@ public class ExcellentShop extends NexPlugin<ExcellentShop> implements UserDataH
             this.priceUpdateTask = null;
         }
         this.cartMenu.clear();
-        if (this.moduleManager != null) {
-            this.moduleManager.shutdown();
-            this.moduleManager = null;
+        if (this.virtualShop != null) {
+            this.virtualShop.shutdown();
+            this.virtualShop = null;
+        }
+        if (this.chestShop != null) {
+            this.chestShop.shutdown();
+            this.chestShop = null;
+        }
+        if (this.auction != null) {
+            this.auction.shutdown();
+            this.auction = null;
         }
         if (this.currencyManager != null) {
             this.currencyManager.shutdown();
@@ -84,7 +107,7 @@ public class ExcellentShop extends NexPlugin<ExcellentShop> implements UserDataH
     @Override
     public boolean setupDataHandlers() {
         try {
-            this.dataHandler = ShopDataHandler.getInstance(this);
+            this.dataHandler = DataHandler.getInstance(this);
             this.dataHandler.setup();
         }
         catch (Exception e) {
@@ -92,7 +115,7 @@ public class ExcellentShop extends NexPlugin<ExcellentShop> implements UserDataH
             return false;
         }
 
-        this.userManager = new ShopUserManager(this);
+        this.userManager = new UserManager(this);
         this.userManager.setup();
 
         return true;
@@ -129,13 +152,13 @@ public class ExcellentShop extends NexPlugin<ExcellentShop> implements UserDataH
 
     @Override
     @NotNull
-    public ShopDataHandler getData() {
+    public DataHandler getData() {
         return this.dataHandler;
     }
 
     @NotNull
     @Override
-    public ShopUserManager getUserManager() {
+    public UserManager getUserManager() {
         return userManager;
     }
 
@@ -149,23 +172,18 @@ public class ExcellentShop extends NexPlugin<ExcellentShop> implements UserDataH
         return cartMenu;
     }
 
-    @NotNull
-    public ModuleManager getModuleCache() {
-        return this.moduleManager;
-    }
-
     @Nullable
     public VirtualShopModule getVirtualShop() {
-        return this.moduleManager.getVirtualShop();
+        return this.virtualShop;
     }
 
     @Nullable
     public ChestShopModule getChestShop() {
-        return this.moduleManager.getChestShop();
+        return this.chestShop;
     }
 
     @Nullable
-    public AuctionManager getAuctionManager() {
-        return this.moduleManager.getAuctionManager();
+    public AuctionManager getAuction() {
+        return this.auction;
     }
 }
