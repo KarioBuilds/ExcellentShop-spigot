@@ -76,7 +76,7 @@ public class AuctionManager extends ShopModule {
         }
 
         this.plugin.getLangManager().loadMissing(AuctionLang.class);
-        this.plugin.getLangManager().setupEnum(AuctionMainMenu.AuctionSortType.class);
+        this.plugin.getLangManager().loadEnum(AuctionMainMenu.AuctionSortType.class);
         this.plugin.getLang().saveChanges();
         //this.plugin.getConfigManager().extractResources("/" + this.getLocalPath() + "/menu/");
 
@@ -271,10 +271,15 @@ public class AuctionManager extends ShopModule {
         return true;
     }
 
-    public boolean add(@NotNull Player player, @NotNull ItemStack item, @NotNull Currency currency, double price) {
+    @Nullable
+    public AuctionListing add(@NotNull Player player, @NotNull ItemStack item, @NotNull Currency currency, double price, boolean takeItem) {
         if (AuctionConfig.LISTINGS_PRICE_ROUND_TO_INT.get()) {
             price = NumberUtil.round(price);
         }
+        if (takeItem) {
+            player.getInventory().setItemInMainHand(null);
+        }
+        if (!player.isOnline()) return null;
 
         if (!player.hasPermission(Perms.AUCTION_BYPASS_LISTING_PRICE)) {
             double curPriceMin = AuctionConfig.getCurrencyPriceMin(currency);
@@ -285,14 +290,14 @@ public class AuctionManager extends ShopModule {
                     .replace(Placeholders.GENERIC_AMOUNT, currency.format(curPriceMax))
                     .replace(currency.replacePlaceholders())
                     .send(player);
-                return false;
+                return null;
             }
             if (curPriceMin > 0 && price < curPriceMin) {
                 plugin.getMessage(AuctionLang.LISTING_ADD_ERROR_PRICE_CURRENCY_MIN)
                     .replace(Placeholders.GENERIC_AMOUNT, currency.format(curPriceMin))
                     .replace(currency.replacePlaceholders())
                     .send(player);
-                return false;
+                return null;
             }
         }
 
@@ -305,7 +310,7 @@ public class AuctionManager extends ShopModule {
                     .replace(Placeholders.GENERIC_TAX, tax)
                     .replace(Placeholders.GENERIC_AMOUNT, currency.format(taxPay))
                     .send(player);
-                return false;
+                return null;
             }
             currency.getHandler().take(player, taxPay);
         }
@@ -320,14 +325,14 @@ public class AuctionManager extends ShopModule {
 
         if (AuctionConfig.LISTINGS_ANNOUNCE) {
             plugin.getMessage(AuctionLang.LISTING_ADD_SUCCESS_ANNOUNCE)
-                .replace(Placeholders.Player.replacer(player))
+                .replace(Placeholders.forPlayer(player))
                 .replace(listing.replacePlaceholders())
                 .broadcast();
         }
 
         this.getMainMenu().update();
         this.getSellingMenu().update();
-        return true;
+        return listing;
     }
 
     public boolean buy(@NotNull Player buyer, @NotNull AuctionListing listing) {
