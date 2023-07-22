@@ -18,10 +18,10 @@ import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nexshop.api.currency.Currency;
 import su.nightexpress.nexshop.api.shop.Product;
 import su.nightexpress.nexshop.api.type.TradeType;
-import su.nightexpress.nexshop.shop.chest.ChestShopModule;
 import su.nightexpress.nexshop.shop.chest.config.ChestLang;
 import su.nightexpress.nexshop.shop.chest.impl.ChestProduct;
 import su.nightexpress.nexshop.shop.chest.impl.ChestShop;
+import su.nightexpress.nexshop.shop.chest.util.ShopUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -60,7 +60,7 @@ public class ShopProductsMenu extends PlayerEditorMenu {
         Player player = viewer.getPlayer();
         int page = viewer.getPage();
 
-        int maxProducts = ChestShopModule.getProductLimit(player);
+        int maxProducts = ShopUtils.getProductLimit(player);
         if (maxProducts < 0) maxProducts = this.productSlots.length;
 
         PriorityQueue<ChestProduct> queue = new PriorityQueue<>(Comparator.comparing(Product::getId));
@@ -125,7 +125,7 @@ public class ShopProductsMenu extends PlayerEditorMenu {
                         return;
                     }
                     if (event.isLeftClick()) {
-                        List<Currency> currencies = new ArrayList<>(ChestShopModule.ALLOWED_CURRENCIES);
+                        List<Currency> currencies = new ArrayList<>(ShopUtils.getAllowedCurrencies());
                         int index = currencies.indexOf(product.getCurrency()) + 1;
                         if (index >= currencies.size()) index = 0;
                         product.setCurrency(currencies.get(index));
@@ -143,7 +143,7 @@ public class ShopProductsMenu extends PlayerEditorMenu {
         super.onClick(viewer, item, slotType, slot, event);
 
         Player player = viewer.getPlayer();
-        int maxProducts = ChestShopModule.getProductLimit(player);
+        int maxProducts = ShopUtils.getProductLimit(player);
         int hasProducts = this.shop.getProducts().size();
         boolean canAdd = maxProducts < 0 || hasProducts < maxProducts;
         if (!canAdd) return;

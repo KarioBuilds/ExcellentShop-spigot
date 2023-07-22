@@ -20,15 +20,16 @@ import su.nightexpress.nexshop.ExcellentShop;
 import su.nightexpress.nexshop.Perms;
 import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nexshop.config.Lang;
-import su.nightexpress.nexshop.shop.chest.ChestPerms;
+import su.nightexpress.nexshop.shop.chest.config.ChestPerms;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
 import su.nightexpress.nexshop.shop.chest.impl.ChestShop;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-public class ShopsListMenu extends ConfigMenu<ExcellentShop> implements AutoPaged<ChestShop> {
+public class ShopListMenu extends ConfigMenu<ExcellentShop> implements AutoPaged<ChestShop> {
 
     private static final String PLACEHOLDER_GLOBAL = "%global%";
 
@@ -40,7 +41,7 @@ public class ShopsListMenu extends ConfigMenu<ExcellentShop> implements AutoPage
     private final List<String> shopLoreOwn;
     private final List<String> shopLoreOthers;
 
-    public ShopsListMenu(@NotNull ChestShopModule module) {
+    public ShopListMenu(@NotNull ChestShopModule module) {
         super(module.plugin(), JYML.loadOrExtract(module.plugin(), module.getLocalPath() + "/menu/", "shops_list.yml"));
         this.module = module;
         this.others = new WeakHashMap<>();
@@ -107,7 +108,7 @@ public class ShopsListMenu extends ConfigMenu<ExcellentShop> implements AutoPage
     @NotNull
     public List<ChestShop> getObjects(@NotNull Player player) {
         String user = this.others.get(player);
-        if (user == null) return this.module.getShops(player);
+        if (user == null) return new ArrayList<>(this.module.getShops(player));
 
         boolean isGlobal = this.isGlobalMode(player);
         return this.module.getShops().stream()

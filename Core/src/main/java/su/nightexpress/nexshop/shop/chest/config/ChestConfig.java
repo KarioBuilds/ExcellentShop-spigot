@@ -12,7 +12,7 @@ import su.nexmedia.engine.utils.StringUtil;
 import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nexshop.currency.CurrencyManager;
 import su.nightexpress.nexshop.hook.HookId;
-import su.nightexpress.nexshop.shop.chest.type.ChestShopType;
+import su.nightexpress.nexshop.shop.chest.util.ShopType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,11 +36,13 @@ public class ChestConfig {
 
     public static final JOption<String> DEFAULT_CURRENCY = JOption.create("Shops.Default_Currency", CurrencyManager.VAULT,
         "Sets the default ChestShop currency. It will be used for new products and when no other currencies are available.",
-        "IMPORTANT: Make sure you have this currency in 'Allowed_Currencies' list!");
+        "IMPORTANT: Make sure you have this currency in 'Allowed_Currencies' list!"
+    ).mapReader(String::toLowerCase);
 
     public static final JOption<Set<String>> ALLOWED_CURRENCIES = JOption.create("Shops.Allowed_Currencies",
         Set.of(CurrencyManager.VAULT),
-        "A list of currencies that can be used for Chest Shop products.");
+        "A list of currencies that can be used for Chest Shop products."
+    ).mapReader(set -> set.stream().map(String::toLowerCase).collect(Collectors.toSet()));
 
     public static final JOption<Set<Material>> ALLOWED_CONTAINERS = JOption.forSet("Shops.Allowed_Containers",
         str -> Material.getMaterial(str.toUpperCase()),
@@ -136,12 +138,12 @@ public class ChestConfig {
     public static final JOption<Integer> DISPLAY_SLIDE_INTERVAL = JOption.create("Display.Title.Slide_Interval", 3,
         "Sets interval (in seconds) between hologram line changes.");
 
-    public static final JOption<Map<ChestShopType, List<String>>> DISPLAY_TEXT = JOption.forMap("Display.Title.Values",
-        str -> StringUtil.getEnum(str, ChestShopType.class).orElse(null),
+    public static final JOption<Map<ShopType, List<String>>> DISPLAY_TEXT = JOption.forMap("Display.Title.Values",
+        str -> StringUtil.getEnum(str, ShopType.class).orElse(null),
         (cfg, path, type) -> cfg.getStringList(path + "." + type),
         Map.of(
-            ChestShopType.ADMIN, Collections.singletonList(Placeholders.SHOP_NAME),
-            ChestShopType.PLAYER, Arrays.asList(Placeholders.SHOP_NAME, "&7Owner: &6" + Placeholders.SHOP_CHEST_OWNER)
+            ShopType.ADMIN, Collections.singletonList(Placeholders.SHOP_NAME),
+            ShopType.PLAYER, Arrays.asList(Placeholders.SHOP_NAME, "&7Owner: &6" + Placeholders.SHOP_CHEST_OWNER)
         ),
         "Sets hologram lines format for player and admin shops.",
         "You can use 'Chest Shop' placeholders here: " + Placeholders.URL_WIKI_PLACEHOLDERS
