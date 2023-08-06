@@ -7,7 +7,7 @@ import su.nightexpress.nexshop.Placeholders;
 
 public class ChestLang extends EngineLang {
 
-    public static final LangKey COMMAND_LIST_DESC  = LangKey.of("ChestShop.Command.List.Desc", "Browse your own or other player's shops.");
+    public static final LangKey COMMAND_LIST_DESC  = LangKey.of("ChestShop.Command.List.Desc", "List of [player's] shops.");
     public static final LangKey COMMAND_LIST_USAGE = LangKey.of("ChestShop.Command.List.Usage", "[player]");
 
     public static final LangKey COMMAND_BANK_DESC  = LangKey.of("ChestShop.Command.Bank.Desc", "Open [player's] bank.");
@@ -16,8 +16,8 @@ public class ChestLang extends EngineLang {
     public static final LangKey COMMAND_CREATE_DESC  = LangKey.of("ChestShop.Command.Create.Desc", "Creates shop of the chest that you're looking on.");
     public static final LangKey COMMAND_CREATE_USAGE = LangKey.of("ChestShop.Command.Create.Usage", "[type]");
 
-    public static final LangKey COMMAND_SEARCH_DESC  = LangKey.of("ChestShop.Command.Search.Desc", "Search for shops with specified item.");
-    public static final LangKey COMMAND_SEARCH_USAGE = LangKey.of("ChestShop.Command.Search.Usage", "<material>");
+    public static final LangKey COMMAND_BROWSE_DESC  = LangKey.of("ChestShop.Command.Browse.Desc", "Player shops GUI.");
+    public static final LangKey COMMAND_BROWSE_USAGE = LangKey.of("ChestShop.Command.Browse.Usage", "");
 
     public static final LangKey COMMAND_REMOVE_DESC = LangKey.of("ChestShop.Command.Remove.Desc", "Removes the shop from the chest that you're looking at.");
 
@@ -63,6 +63,19 @@ public class ChestLang extends EngineLang {
     public static final LangKey SHOP_TRADE_SELL_INFO_OWNER = LangKey.of("ChestShop.Shop.Trade.Sell.Info.Owner",
         "<! prefix:\"false\" !>" +
             ORANGE + Placeholders.PLAYER_DISPLAY_NAME + LIGHT_YELLOW + " just sold " + ORANGE + "x" + Placeholders.GENERIC_AMOUNT + " " + Placeholders.GENERIC_ITEM + LIGHT_YELLOW + " for " + ORANGE + Placeholders.GENERIC_PRICE + LIGHT_YELLOW + " to your " + ORANGE + Placeholders.SHOP_NAME + LIGHT_YELLOW + " shop.");
+
+    public static final LangKey NOTIFICATION_SHOP_EARNINGS = LangKey.of("ChestShop.Notification.ShopEarnings",
+        "<! prefix:\"false\" !>" +
+            "\n" + LIGHT_YELLOW +
+            "\n" + ORANGE + BOLD + "Chest Shop Notification:" +
+            "\n" + LIGHT_YELLOW + "Since your last online, your shops earned:" +
+            "\n" + ORANGE + "▪ " + Placeholders.GENERIC_AMOUNT +
+            "\n" + LIGHT_YELLOW);
+
+    public static final LangKey SEARCH_ENTER_ITEM = LangKey.of("ChestShop.Search.ItemPrompt",
+        "<! type:\"titles:20:-1:20\" sound:\"" + Sound.BLOCK_LAVA_POP.name() + "\" !>" +
+            "\n" + LIGHT_YELLOW + BOLD + "Shop Search" +
+            "\n" + GRAY + "Enter item " + LIGHT_YELLOW + "name" + GRAY + " or " + LIGHT_YELLOW + "material" + GRAY + " to search for.");
 
     public static final LangKey BANK_ERROR_INVALID_CURRENCY = LangKey.of("ChestShop.Shop.Bank.Error.InvalidCurrency",
         "<! type:\"titles:10:80:10\" !>" +

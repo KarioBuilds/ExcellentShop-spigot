@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-public class ProductPriceMenu extends PlayerEditorMenu {
+public class ProductPriceMenu extends ConfigEditorMenu {
 
     private final ChestProduct product;
     private final Map<TradeType, Map<PriceType, List<String>>> formatLorePrice;
@@ -52,8 +52,22 @@ public class ProductPriceMenu extends PlayerEditorMenu {
         this.registerHandler(Type.class)
             .addClick(Type.PRODUCT_CHANGE_PRICE_TYPE, (viewer, event) -> {
                 Predicate<PriceType> predicate = priceType -> viewer.getPlayer().hasPermission(ChestPerms.PRICE_TYPE + priceType.name().toLowerCase());
+
+                double sell = product.getPricer().getPrice(TradeType.SELL);
+                double buy = product.getPricer().getPrice(TradeType.BUY);
+
                 PriceType priceType = CollectionsUtil.next(product.getPricer().getType(), predicate);
                 product.setPricer(ProductPricer.from(priceType));
+
+                if (product.getPricer() instanceof RangedProductPricer pricer) {
+                    pricer.setPriceMin(TradeType.BUY, buy);
+                    pricer.setPriceMax(TradeType.BUY, buy);
+                    pricer.setPriceMin(TradeType.SELL, sell);
+                    pricer.setPriceMax(TradeType.SELL, sell);
+                }
+                product.getPricer().setPrice(TradeType.BUY, buy);
+                product.getPricer().setPrice(TradeType.SELL, sell);
+
                 this.save(viewer);
             })
         .addClick(Type.PRODUCT_CHANGE_PRICE_BUY, (viewer, event) -> {
