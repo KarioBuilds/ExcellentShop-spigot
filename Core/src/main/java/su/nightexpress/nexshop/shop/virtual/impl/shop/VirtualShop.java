@@ -7,33 +7,35 @@ import su.nexmedia.engine.api.config.JYML;
 import su.nexmedia.engine.lang.LangManager;
 import su.nexmedia.engine.utils.Colorizer;
 import su.nexmedia.engine.utils.StringUtil;
-import su.nightexpress.nexshop.Placeholders;
+import su.nightexpress.nexshop.shop.virtual.util.Placeholders;
 import su.nightexpress.nexshop.api.shop.Shop;
 import su.nightexpress.nexshop.api.type.TradeType;
 import su.nightexpress.nexshop.config.Lang;
 import su.nightexpress.nexshop.shop.virtual.VirtualShopModule;
 import su.nightexpress.nexshop.shop.virtual.config.VirtualPerms;
 import su.nightexpress.nexshop.shop.virtual.editor.menu.ShopMainEditor;
-import su.nightexpress.nexshop.shop.virtual.impl.VirtualDiscount;
 import su.nightexpress.nexshop.shop.virtual.impl.product.VirtualProduct;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.IntStream;
 
-public final class VirtualShop extends Shop<VirtualShop, VirtualProduct> {
+public abstract class VirtualShop<
+    S extends VirtualShop<S, P>,
+    P extends VirtualProduct<P, S>> extends Shop<S, P> {
 
-    private final VirtualShopModule module;
-    private final VirtualShopView view;
-    private final JYML configProducts;
+    protected final VirtualShopModule module;
+    protected final VirtualShopView<S, P>   view;
+    protected final JYML              configProducts;
+    protected final Set<Integer> npcIds;
 
-    private final Set<VirtualDiscount> discountConfigs;
-    private final Set<Integer> npcIds;
+    protected     String       name;
+    protected     List<String> description;
+    protected boolean      isPermissionRequired;
+    protected     ItemStack    icon;
 
-    private String       name;
-    private List<String> description;
-    private int          pages;
-    private boolean      isPermissionRequired;
-    private ItemStack    icon;
 
     private ShopMainEditor editor;
 
@@ -41,47 +43,46 @@ public final class VirtualShop extends Shop<VirtualShop, VirtualProduct> {
         super(module.plugin(), cfg, id);
         this.module = module;
         this.configProducts = new JYML(cfg.getFile().getParentFile().getAbsolutePath(), "products.yml");
-        this.discountConfigs = new HashSet<>();
-        this.npcIds = new HashSet<>();
 
         JYML configView = new JYML(cfg.getFile().getParentFile().getAbsolutePath(), "view.yml");
-        this.view = new VirtualShopView(this, configView);
+        this.view = new VirtualShopView<>(this.get(), configView);
+
+        this.npcIds = new HashSet<>();
 
         this.placeholderMap
-            .add(Placeholders.SHOP_VIRTUAL_DESCRIPTION, () -> String.join("\n", this.getDescription()))
-            .add(Placeholders.SHOP_VIRTUAL_PERMISSION_NODE, () -> VirtualPerms.PREFIX_SHOP + this.getId())
-            .add(Placeholders.SHOP_VIRTUAL_PERMISSION_REQUIRED, () -> LangManager.getBoolean(this.isPermissionRequired()))
-            .add(Placeholders.SHOP_VIRTUAL_PAGES, () -> String.valueOf(this.getPages()))
-            .add(Placeholders.SHOP_VIRTUAL_VIEW_SIZE, () -> String.valueOf(this.getView().getOptions().getSize()))
-            .add(Placeholders.SHOP_VIRTUAL_VIEW_TITLE, () -> this.getView().getOptions().getTitle())
-            .add(Placeholders.SHOP_VIRTUAL_NPC_IDS, () -> String.join(", ", this.getNPCIds().stream().map(String::valueOf).toList()))
-            ;
+            .add(Placeholders.SHOP_TYPE, () -> plugin.getLangManager().getEnum(this.getType()))
+            .add(Placeholders.SHOP_DESCRIPTION, () -> String.join("\n", this.getDescription()))
+            .add(Placeholders.SHOP_PERMISSION_NODE, () -> VirtualPerms.PREFIX_SHOP + this.getId())
+            .add(Placeholders.SHOP_PERMISSION_REQUIRED, () -> LangManager.getBoolean(this.isPermissionRequired()))
+            .add(Placeholders.SHOP_VIEW_SIZE, () -> String.valueOf(this.getView().getOptions().getSize()))
+            .add(Placeholders.SHOP_VIEW_TITLE, () -> this.getView().getOptions().getTitle())
+            .add(Placeholders.SHOP_NPC_IDS, () -> String.join(", ", this.getNPCIds().stream().map(String::valueOf).toList()));
     }
 
     @Override
-    public boolean load() {
+    public final boolean load() {
         this.setName(cfg.getString("Name", StringUtil.capitalizeUnderscored(this.getId())));
         this.setDescription(cfg.getStringList("Description"));
-        this.setPages(cfg.getInt("Pages", 1));
         this.setPermissionRequired(cfg.getBoolean("Permission_Required", false));
         this.setIcon(cfg.getItem("Icon"));
         this.getNPCIds().addAll(IntStream.of(cfg.getIntArray("Citizens.Attached_NPC")).boxed().toList());
+
         for (TradeType buyType : TradeType.values()) {
             this.setTransactionEnabled(buyType, cfg.getBoolean("Transaction_Allowed." + buyType.name(), true));
         }
-        for (String sId : cfg.getSection("Discounts")) {
-            this.addDiscountConfig(VirtualDiscount.read(cfg, "Discounts." + sId));
-        }
+        if (!this.loadAdditionalData()) return false;
         this.loadProducts();
         return true;
     }
+
+    protected abstract boolean loadAdditionalData();
 
     private void loadProducts() {
         this.getProductMap().clear();
         this.getConfigProducts().reload();
         this.getConfigProducts().getSection("List").stream().map(productId -> {
             try {
-                return VirtualProduct.read(this.getConfigProducts(), "List." + productId, productId);
+                return this.loadProduct(this.getConfigProducts(), "List." + productId, productId);
             }
             catch (Exception e) {
                 this.plugin.error("Could not load '" + productId + "' product in '" + getId() + "' shop!");
@@ -90,6 +91,9 @@ public final class VirtualShop extends Shop<VirtualShop, VirtualProduct> {
             }
         }).filter(Objects::nonNull).forEach(this::addProduct);
     }
+
+    @NotNull
+    protected abstract P loadProduct(@NotNull JYML cfg, @NotNull String path, @NotNull String id);
 
     @Override
     public boolean canAccess(@NotNull Player player, boolean notify) {
@@ -100,11 +104,8 @@ public final class VirtualShop extends Shop<VirtualShop, VirtualProduct> {
         return this.getModule().isAvailable(player, notify);
     }
 
-    @Override
     @NotNull
-    protected VirtualShop get() {
-        return this;
-    }
+    public abstract VirtualShopType getType();
 
     @NotNull
     public VirtualShopModule getModule() {
@@ -113,11 +114,11 @@ public final class VirtualShop extends Shop<VirtualShop, VirtualProduct> {
 
     @Override
     @NotNull
-    public VirtualShopView getView() {
+    public VirtualShopView<S, P> getView() {
         return this.view;
     }
 
-    public void clear() {
+    public final void clear() {
         if (this.editor != null) {
             this.editor.clear();
             this.editor = null;
@@ -125,42 +126,43 @@ public final class VirtualShop extends Shop<VirtualShop, VirtualProduct> {
         if (this.view != null) {
             this.view.clear();
         }
+        this.clearAdditionalData();
         this.products.values().forEach(VirtualProduct::clear);
         this.products.clear();
-        this.discountConfigs.forEach(VirtualDiscount::clear);
-        this.discountConfigs.clear();
     }
 
+    protected abstract void clearAdditionalData();
+
     @Override
-    public void onSave() {
+    public final void onSave() {
         this.saveSettings();
         this.saveProducts();
     }
 
-    public void saveSettings() {
+    public final void saveSettings() {
         view.getConfig().set("Title", this.view.getOptions().getTitle());
         view.getConfig().set("Size", this.view.getOptions().getSize());
         view.getConfig().saveChanges();
 
         cfg.set("Name", this.getName());
         cfg.set("Description", this.getDescription());
-        cfg.set("Pages", this.getPages());
         cfg.set("Permission_Required", this.isPermissionRequired());
-        this.transactions.forEach((type, isAllowed) -> cfg.set("Transaction_Allowed." + type.name(), isAllowed));
         cfg.setItem("Icon", this.getIcon());
         cfg.setIntArray("Citizens.Attached_NPC", this.getNPCIds().stream().mapToInt(Number::intValue).toArray());
-        cfg.set("Discounts", null);
-        this.discountConfigs.forEach(discountConfig -> VirtualDiscount.write(discountConfig, cfg, "Discounts." + UUID.randomUUID()));
+        this.transactions.forEach((type, isAllowed) -> cfg.set("Transaction_Allowed." + type.name(), isAllowed));
+        this.saveAdditionalSettings();
         cfg.saveChanges();
     }
 
-    public void saveProducts() {
+    protected abstract void saveAdditionalSettings();
+
+    public final void saveProducts() {
         configProducts.set("List", null);
-        this.getProducts()
-            .stream().sorted(Comparator.comparingInt(VirtualProduct::getSlot).thenComparingInt(VirtualProduct::getPage))
-            .forEach(product -> VirtualProduct.write(product, configProducts, "List." + product.getId()));
+        this.saveAdditionalProducts();
         configProducts.saveChanges();
     }
+
+    protected abstract void saveAdditionalProducts();
 
     @NotNull
     public JYML getConfigProducts() {
@@ -212,32 +214,7 @@ public final class VirtualShop extends Shop<VirtualShop, VirtualProduct> {
         this.icon.setAmount(1);
     }
 
-    public int getPages() {
-        return this.pages;
-    }
-
-    public void setPages(int pages) {
-        this.pages = Math.max(1, pages);
-    }
-
     public Set<Integer> getNPCIds() {
         return this.npcIds;
-    }
-
-    @NotNull
-    public Set<VirtualDiscount> getDiscountConfigs() {
-        return new HashSet<>(this.discountConfigs);
-    }
-
-    public void addDiscountConfig(@NotNull VirtualDiscount config) {
-        if (this.discountConfigs.add(config)) {
-            config.setShop(this);
-        }
-    }
-
-    public void removeDiscountConfig(@NotNull VirtualDiscount config) {
-        if (this.discountConfigs.remove(config)) {
-            config.clear();
-        }
     }
 }

@@ -12,7 +12,6 @@ import su.nightexpress.nexshop.ExcellentShop;
 import su.nightexpress.nexshop.shop.virtual.VirtualShopModule;
 import su.nightexpress.nexshop.shop.virtual.impl.shop.VirtualShop;
 
-@Deprecated
 public class VirtualShopNPCListener extends AbstractListener<ExcellentShop> {
 
     private final VirtualShopModule module;
@@ -35,7 +34,7 @@ public class VirtualShopNPCListener extends AbstractListener<ExcellentShop> {
     private void onClick(@NotNull NPCClickEvent e) {
         int id = e.getNPC().getId();
 
-        VirtualShop shop = this.module.getShops().stream()
+        VirtualShop<?, ?> shop = this.module.getShops().stream()
             .filter(shop2 -> shop2.getNPCIds().contains(id))
             .findFirst().orElse(null);
         if (shop == null) return;

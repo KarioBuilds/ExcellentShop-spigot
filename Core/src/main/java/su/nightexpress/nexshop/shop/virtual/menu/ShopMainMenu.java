@@ -28,7 +28,7 @@ public class ShopMainMenu extends ConfigMenu<ExcellentShop> {
         this.load();
 
         this.cfg.getSection("Shops").forEach(shopId -> {
-            VirtualShop shop = module.getShopById(shopId);
+            VirtualShop<?, ?> shop = module.getShopById(shopId);
             if (shop == null) {
                 this.module.error("Invalid shop in the main menu: '" + shopId + "' !");
                 return;

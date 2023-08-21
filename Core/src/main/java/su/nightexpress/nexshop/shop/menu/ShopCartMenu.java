@@ -24,6 +24,7 @@ import su.nightexpress.nexshop.api.shop.Shop;
 import su.nightexpress.nexshop.api.type.TradeType;
 import su.nightexpress.nexshop.config.Config;
 import su.nightexpress.nexshop.shop.chest.impl.ChestShop;
+import su.nightexpress.nexshop.shop.virtual.impl.product.StaticProduct;
 import su.nightexpress.nexshop.shop.virtual.impl.product.VirtualProduct;
 
 import java.util.Map;
@@ -57,7 +58,7 @@ public class ShopCartMenu extends ConfigMenu<ExcellentShop> {
                     prepared.trade();
                     this.plugin.runTask(task -> {
                         int page = 1;
-                        if (prepared.getProduct() instanceof VirtualProduct virtualProduct) {
+                        if (prepared.getProduct() instanceof StaticProduct virtualProduct) {
                             page = virtualProduct.getPage();
                         }
                         prepared.getShop().open(viewer.getPlayer(), page);
@@ -68,7 +69,7 @@ public class ShopCartMenu extends ConfigMenu<ExcellentShop> {
                 this.getPrepared(viewer).ifPresent(prepared -> {
                     this.plugin.runTask(task -> {
                         int page = 1;
-                        if (prepared.getProduct() instanceof VirtualProduct virtualProduct) {
+                        if (prepared.getProduct() instanceof StaticProduct virtualProduct) {
                             page = virtualProduct.getPage();
                         }
                         prepared.getShop().open(viewer.getPlayer(), page);
@@ -180,7 +181,11 @@ public class ShopCartMenu extends ConfigMenu<ExcellentShop> {
         double shopBalance = shop instanceof ChestShop chestShop ? chestShop.getOwnerBank().getBalance(product.getCurrency()) : -1D;
         double userBalance = product.getCurrency().getHandler().getBalance(player);
 
-        if (product instanceof ItemProduct itemProduct) {
+        ItemProduct itemProduct = null;
+        if (product instanceof ItemProduct ip) itemProduct = ip;
+        else if (product instanceof VirtualProduct<?, ?> vp && vp.getSpecific() instanceof ItemProduct ip) itemProduct = ip;
+
+        if (itemProduct != null) {
             ItemStack item = itemProduct.getItem();
             if (tradeType == TradeType.BUY) {
                 // Allow to buy no more than player can carry.

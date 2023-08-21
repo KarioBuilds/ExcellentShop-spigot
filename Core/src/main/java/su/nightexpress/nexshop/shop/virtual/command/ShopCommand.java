@@ -65,7 +65,7 @@ public class ShopCommand extends GeneralCommand<ExcellentShop> {
             return;
         }
 
-        VirtualShop shop = this.module.getShopById(result.getArg(0));
+        VirtualShop<?, ?> shop = this.module.getShopById(result.getArg(0));
         if (shop == null) {
             plugin.getMessage(VirtualLang.SHOP_ERROR_INVALID).send(sender);
             return;
