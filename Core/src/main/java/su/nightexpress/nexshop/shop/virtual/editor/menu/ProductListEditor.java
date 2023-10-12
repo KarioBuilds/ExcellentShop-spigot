@@ -22,7 +22,7 @@ import su.nexmedia.engine.utils.PDCUtil;
 import su.nightexpress.nexshop.ExcellentShop;
 import su.nightexpress.nexshop.data.price.ProductPriceStorage;
 import su.nightexpress.nexshop.data.stock.ProductStockStorage;
-import su.nightexpress.nexshop.shop.price.FlatProductPricer;
+import su.nightexpress.nexshop.shop.price.FlatPricer;
 import su.nightexpress.nexshop.shop.virtual.editor.VirtualLocales;
 import su.nightexpress.nexshop.shop.virtual.impl.product.*;
 import su.nightexpress.nexshop.shop.virtual.impl.product.specific.CommandSpecific;
@@ -185,11 +185,14 @@ public class ProductListEditor extends EditorMenu<ExcellentShop, VirtualShop<?, 
                     if (cached == null) {
                         ItemSpecific specific = new ItemSpecific(cursor);
                         cached = new StaticProduct(ShopUtils.generateProductId(specific, shop), specific, ShopUtils.getDefaultCurrency());
-                        cached.setPricer(new FlatProductPricer());
+                        cached.setPricer(new FlatPricer());
                         cached.setStock(new VirtualProductStock<>());
                         cached.getStock().unlock();
 
                         // Delete product price & stock datas for new items in case there was product with similar ID.
+                        if (!cached.hasShop()) {
+                            cached.setShop(staticShop);
+                        }
                         ProductPriceStorage.deleteData(cached);
                         ProductStockStorage.deleteData(cached);
                     }
@@ -220,6 +223,7 @@ public class ProductListEditor extends EditorMenu<ExcellentShop, VirtualShop<?, 
             //if (cursor == null || cursor.getType().isAir()) return;
 
             VirtualProduct<?, ?> product = hasCursor ? this.getCachedProduct(cursor) : null;
+            boolean deleteData = false;
             if (product == null) {
                 ProductSpecific spec;
                 if (hasCursor) {
@@ -238,13 +242,10 @@ public class ProductListEditor extends EditorMenu<ExcellentShop, VirtualShop<?, 
                 }
                 else return;
 
-                product.setPricer(new FlatProductPricer());
+                product.setPricer(new FlatPricer());
                 product.setStock(new VirtualProductStock<>());
                 product.getStock().unlock();
-
-                // Delete product price & stock datas for new items in case there was product with similar ID.
-                ProductPriceStorage.deleteData(product);
-                ProductStockStorage.deleteData(product);
+                deleteData = true;
             }
 
             if (shop instanceof StaticShop staticShop && product instanceof StaticProduct staticProduct) {
@@ -254,6 +255,12 @@ public class ProductListEditor extends EditorMenu<ExcellentShop, VirtualShop<?, 
             }
             else if (shop instanceof RotatingShop rotatingShop && product instanceof RotatingProduct rotatingProduct) {
                 rotatingShop.addProduct(rotatingProduct);
+            }
+
+            if (deleteData) {
+                // Delete product price & stock datas for new items in case there was product with similar ID.
+                ProductPriceStorage.deleteData(product);
+                ProductStockStorage.deleteData(product);
             }
 
             shop.saveProducts();
