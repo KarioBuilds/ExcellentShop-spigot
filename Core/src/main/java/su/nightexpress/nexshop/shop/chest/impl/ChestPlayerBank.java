@@ -1,10 +1,12 @@
 package su.nightexpress.nexshop.shop.chest.impl;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nexshop.api.currency.Currency;
+import su.nightexpress.nexshop.api.currency.CurrencyOfflineHandler;
 import su.nightexpress.nexshop.shop.chest.config.ChestConfig;
 
 import java.util.Map;
@@ -26,6 +28,11 @@ public class ChestPlayerBank {
     }
 
     @NotNull
+    public OfflinePlayer getOfflinePlayer() {
+        return Bukkit.getOfflinePlayer(this.getHolder());
+    }
+
+    @NotNull
     public UUID getHolder() {
         return holder;
     }
@@ -44,6 +51,14 @@ public class ChestPlayerBank {
             return true;
         }
 
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
+            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+            if (offlineHandler != null) {
+                offlineHandler.give(this.getHolder(), amount);
+                return true;
+            }
+        }
+
         double balance = this.getBalance(currency) + amount;
         this.getBalanceMap().put(currency, balance);
         return true;
@@ -58,6 +73,14 @@ public class ChestPlayerBank {
             return true;
         }
 
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
+            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+            if (offlineHandler != null) {
+                offlineHandler.take(this.getHolder(), amount);
+                return true;
+            }
+        }
+
         double balance = this.getBalance(currency) - amount;
         this.getBalanceMap().put(currency, balance);
         return true;
@@ -69,6 +92,13 @@ public class ChestPlayerBank {
             return currency.getHandler().getBalance(player);
         }
 
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
+            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+            if (offlineHandler != null) {
+                return offlineHandler.getBalance(this.getHolder());
+            }
+        }
+
         return this.getBalanceMap().getOrDefault(currency, 0D);
     }
 
@@ -76,6 +106,13 @@ public class ChestPlayerBank {
         Player player = this.getOnlinePlayer();
         if (player != null && ChestConfig.SHOP_AUTO_BANK.get()) {
             return currency.getHandler().getBalance(player) >= amount;
+        }
+
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
+            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+            if (offlineHandler != null) {
+                return offlineHandler.getBalance(this.getHolder()) >= amount;
+            }
         }
 
         return this.getBalance(currency) >= amount;
