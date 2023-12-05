@@ -8,26 +8,31 @@ import su.nexmedia.engine.api.menu.AutoPaged;
 import su.nexmedia.engine.api.menu.MenuItemType;
 import su.nexmedia.engine.api.menu.click.ClickHandler;
 import su.nexmedia.engine.api.menu.click.ItemClick;
+import su.nexmedia.engine.api.menu.impl.ConfigMenu;
 import su.nexmedia.engine.api.menu.impl.MenuOptions;
 import su.nexmedia.engine.api.menu.impl.MenuViewer;
 import su.nexmedia.engine.api.placeholder.PlaceholderMap;
 import su.nexmedia.engine.utils.Colorizer;
+import su.nexmedia.engine.utils.ItemReplacer;
 import su.nexmedia.engine.utils.ItemUtil;
+import su.nightexpress.nexshop.ExcellentShop;
 import su.nightexpress.nexshop.Placeholders;
-import su.nightexpress.nexshop.api.shop.ShopView;
-import su.nightexpress.nexshop.api.type.ShopClickAction;
+import su.nightexpress.nexshop.api.shop.type.ShopClickAction;
 import su.nightexpress.nexshop.config.Config;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChestShopView extends ShopView<ChestShop, ChestProduct> implements AutoPaged<ChestProduct> {
+public class ChestShopView extends ConfigMenu<ExcellentShop> implements AutoPaged<ChestProduct> {
 
     private static int[]        PRODUCT_SLOTS;
     private static List<String> PRODUCT_FORMAT_LORE;
 
-    public ChestShopView(@NotNull ChestShop shop) {
-        super(shop, JYML.loadOrExtract(shop.plugin(), shop.getModule().getLocalPath(), "view.yml"));
+    private final ChestShop shop;
+
+    public ChestShopView(@NotNull ExcellentShop plugin, @NotNull ChestShop shop) {
+        super(plugin, JYML.loadOrExtract(shop.plugin(), shop.getModule().getLocalPath(), "view.yml"));
+        this.shop = shop;
 
         PRODUCT_SLOTS = cfg.getIntArray("Product_Slots");
         PRODUCT_FORMAT_LORE = Colorizer.apply(cfg.getStringList("Product_Format.Lore.Text"));
@@ -39,18 +44,16 @@ public class ChestShopView extends ShopView<ChestShop, ChestProduct> implements 
 
         this.load();
 
-        this.getItems().forEach(menuItem -> {
-            if (menuItem.getOptions().getDisplayModifier() == null) {
-                menuItem.getOptions().setDisplayModifier((viewer, item) -> ItemUtil.replace(item, this.shop.replacePlaceholders()));
-            }
-        });
+        this.getItems().forEach(menuItem -> menuItem.getOptions().addDisplayModifier((viewer, item) -> {
+            ItemReplacer.replace(item, this.shop.replacePlaceholders());
+        }));
     }
 
     @Override
     public void onPrepare(@NotNull MenuViewer viewer, @NotNull MenuOptions options) {
         super.onPrepare(viewer, options);
 
-        options.setTitle(this.getShop().getName());
+        options.setTitle(this.shop.getName());
 
         this.getItemsForPage(viewer).forEach(this::addItem);
     }
@@ -63,7 +66,7 @@ public class ChestShopView extends ShopView<ChestShop, ChestProduct> implements 
     @Override
     @NotNull
     public List<ChestProduct> getObjects(@NotNull Player player) {
-        return new ArrayList<>(this.getShop().getProducts());
+        return new ArrayList<>(this.shop.getProducts());
     }
 
     @Override
@@ -101,7 +104,9 @@ public class ChestShopView extends ShopView<ChestShop, ChestProduct> implements 
             ShopClickAction clickType = Config.GUI_CLICK_ACTIONS.get().get(event.getClick());
             if (clickType == null) return;
 
-            product.prepareTrade(viewer.getPlayer(), clickType);
+            this.plugin.runTask(task -> {
+                product.prepareTrade(viewer.getPlayer(), clickType);
+            });
         };
     }
 }
