@@ -19,13 +19,8 @@
     <repositories>
 
         <repository>
-            <id>sonatype</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-
-        <repository>
-            <id>sk89q-repo</id>
-            <url>https://maven.enginehub.org/repo/</url>
+            <id>alex9849</id>
+            <url>https://nexus.alex9849.net/repository/maven-releases/</url>
         </repository>
 
         <repository>
@@ -39,13 +34,18 @@
         </repository>
 
         <repository>
-            <id>rosewood-repo</id>
-            <url>https://repo.rosewooddev.io/repository/public/</url>
+            <id>oraxen</id>
+            <url>https://repo.oraxen.com/releases</url>
         </repository>
 
         <repository>
-            <id>alex9849</id>
-            <url>https://nexus.alex9849.net/repository/maven-releases/</url>
+            <id>sk89q-repo</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
+
+        <repository>
+            <id>rosewood-repo</id>
+            <url>https://repo.rosewooddev.io/repository/public/</url>
         </repository>
 
         <repository>
@@ -61,6 +61,11 @@
         <repository>
             <id>techscode</id>
             <url>https://repo.techscode.com/repository/maven-releases/</url>
+        </repository>
+
+        <repository>
+            <id>sonatype</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
 
     </repositories>
@@ -79,8 +84,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>net.alex9849.arm</groupId>
-            <artifactId>AdvancedRegionMarket</artifactId>
+            <groupId>net.alex9849.advancedregionmarket</groupId>
+            <artifactId>advancedregionmarket</artifactId>
             <version>3.5.3</version>
         </dependency>
         <dependency>
@@ -90,9 +95,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.th0rgal.oraxen</groupId>
-            <artifactId>Oraxen</artifactId>
-            <version>1.162.0</version>
+            <groupId>io.th0rgal</groupId>
+            <artifactId>oraxen</artifactId>
+            <version>1.164.0</version>
         </dependency>
         <dependency>
             <groupId>org.black_ixx</groupId>
@@ -133,7 +138,7 @@
         <dependency>
             <groupId>com.magmaguy</groupId>
             <artifactId>EliteMobs</artifactId>
-            <version>8.5.4</version>
+            <version>8.6.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>su.nightexpress.coinsengine</groupId>
