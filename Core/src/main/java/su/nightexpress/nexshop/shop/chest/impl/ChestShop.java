@@ -55,7 +55,7 @@ public class ChestShop extends AbstractShop<ChestProduct> {
     private OfflinePlayer ownerPlayer;
     private ShopType      type;
 
-    private List<String> displayText;
+    //private List<String> displayText;
     private Location displayTextLocation;
     private Location displayItemLocation;
     private Location displayShowcaseLocation;
@@ -297,6 +297,14 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         });
     }
 
+    @Nullable
+    public ChestProduct getProductAtSlot(int slot) {
+        List<ChestProduct> products = new ArrayList<>(this.getProducts());
+        if (products.size() <= slot) return null;
+
+        return products.get(slot);
+    }
+
     @NotNull
     public Pair<Container, Container> getSides() {
         if (!this.isDoubleChest()) {
@@ -313,8 +321,8 @@ public class ChestShop extends AbstractShop<ChestProduct> {
     @NotNull
     public Inventory getInventory() {
         Inventory inventory = this.getContainer().getInventory();
-        if (this.isDoubleChest() && inventory.getHolder() instanceof DoubleChest doubleChest) {
-            return doubleChest.getInventory();
+        if (this.isDoubleChest() && inventory.getHolder() instanceof DoubleChest chest) {
+            return chest.getInventory();
         }
         return inventory;
     }
@@ -376,10 +384,16 @@ public class ChestShop extends AbstractShop<ChestProduct> {
     }
 
     @Nullable
-    public ItemStack getDisplayProduct() {
+    public ChestProduct getRandomProduct() {
         Set<ChestProduct> products = new HashSet<>(this.getProducts());
-        return products.isEmpty() ? null : Rnd.get(products).getPreview();
+        return products.isEmpty() ? null : Rnd.get(products);
     }
+
+    /*@Nullable
+    public ItemStack getDisplayProduct() {
+        ChestProduct product = this.getRandomProduct();
+        return product == null ? null : product.getPreview();
+    }*/
 
     @Nullable
     public ItemStack getShowcaseItem() {
@@ -393,14 +407,20 @@ public class ChestShop extends AbstractShop<ChestProduct> {
 
     @NotNull
     public List<String> getDisplayText() {
-        if (this.displayText == null) this.updateDisplayText();
-        return this.displayText;
+        List<String> displayText = new ArrayList<>(ChestConfig.DISPLAY_HOLOGRAM_TEXT.get().getOrDefault(this.getType(), Collections.emptyList()));
+        //this.displayText.replaceAll(this.replacePlaceholders());
+
+        //if (this.displayText == null) this.updateDisplayText();
+        //return this.displayText;
+
+        return displayText;
     }
 
+    /*@Deprecated
     public void updateDisplayText() {
-        this.displayText = new ArrayList<>(ChestConfig.DISPLAY_HOLOGRAM_TEXT.get().getOrDefault(this.getType(), Collections.emptyList()));
-        this.displayText.replaceAll(this.replacePlaceholders());
-    }
+        //this.displayText = new ArrayList<>(ChestConfig.DISPLAY_HOLOGRAM_TEXT.get().getOrDefault(this.getType(), Collections.emptyList()));
+        //this.displayText.replaceAll(this.replacePlaceholders());
+    }*/
 
     @NotNull
     public Location getDisplayTextLocation() {

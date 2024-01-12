@@ -47,12 +47,7 @@ public class BankCommand extends ModuleCommand<ChestShopModule> {
             }
 
             UUID targetId = user.getId();
-            if (targetId.equals(player.getUniqueId())) {
-                this.module.getBankMenu().openNextTick(player, 1);
-            }
-            else {
-                this.plugin.runTask(task -> this.module.getBankMenu().open(player, targetId));
-            }
+            this.plugin.runTask(task -> this.module.getBankMenu().open(player, targetId));
         });
     }
 }

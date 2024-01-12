@@ -386,6 +386,9 @@ public class ChestShopModule extends AbstractShopModule implements ShopModule {
         shop.save();
 
         this.addShop(shop);
+        if (this.displayHandler != null) {
+            this.displayHandler.update(shop);
+        }
         plugin.getMessage(ChestLang.SHOP_CREATION_INFO_DONE).send(player);
         return true;
     }
@@ -422,7 +425,6 @@ public class ChestShopModule extends AbstractShopModule implements ShopModule {
 
         this.removeShop(shop);
 
-        // TODO Option to withdraw bank for 0 active shops
         if (this.getShopsAmount(player) <= 0) {
             for (Currency currency : ChestUtils.getAllowedCurrencies()) {
                 this.withdrawFromBank(player, currency, -1);

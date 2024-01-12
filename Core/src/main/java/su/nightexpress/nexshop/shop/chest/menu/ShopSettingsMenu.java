@@ -43,13 +43,14 @@ public class ShopSettingsMenu extends ConfigEditorMenu implements Linked<ChestSh
                 ChestShop shop = this.getShop(viewer);
                 this.handleInput(viewer, Lang.EDITOR_GENERIC_ENTER_NAME, wrapper -> {
                     shop.setName(wrapper.getText());
-                    shop.updateDisplayText();
+                    //shop.updateDisplayText();
                     shop.save();
+                    shop.openMenu(viewer.getPlayer());
                     return true;
                 });
             })
             .addClick(Type.SHOP_BANK, (viewer, event) -> {
-                module.getBankMenu().openNextTick(viewer, 1);
+                module.getBankMenu().open(viewer.getPlayer(), this.getShop(viewer));
             })
             .addClick(Type.SHOP_CHANGE_TRANSACTIONS, (viewer, event) -> {
                 ChestShop shop = this.getShop(viewer);
@@ -102,6 +103,12 @@ public class ShopSettingsMenu extends ConfigEditorMenu implements Linked<ChestSh
                     if (viewer.getPlayer().hasPermission(ChestPerms.COMMAND_BANK_OTHERS)) return true;
 
                     return !ChestConfig.SHOP_AUTO_BANK.get();
+                });
+            }
+            else if (menuItem.getType() == Type.SHOP_CHANGE_TYPE) {
+                menuItem.getOptions().setVisibilityPolicy(viewer -> {
+                    ChestShop shop = this.getShop(viewer);
+                    return CollectionsUtil.next(shop.getType(), shopType -> shopType.hasPermission(viewer.getPlayer())) != shop.getType();
                 });
             }
         });

@@ -1,6 +1,8 @@
-Title: '#5d6d7e&lShop'
-Size: 27
-Inventory_Type: CHEST
+Settings:
+  Title: '&lShop'
+  Size: 27
+  Inventory_Type: CHEST
+  Auto_Refresh: 0
 
 Product_Slots: 11,12,13,14,15
 Product_Format:
@@ -8,36 +10,22 @@ Product_Format:
     Text:
       - '%lore%'
       - ''
-      - '#ee9aff▪ #ddeceeBuy for: #ee9aff%product_price_buy_formatted% &7(%product_stock_global_buy_amount_left% left)'
-      - '#ee9aff▪ #ddeceeSell for: #ee9aff%product_price_sell_formatted% &7(%product_stock_global_sell_amount_left% left)'
+      - '#ffeea2▪ #d4d9d8Buy: #ffeea2%product_price_buy_formatted%#898989 (Left-Click) (#ffeea2%product_stock_global_buy_amount_left% #898989left)'
+      - '#ffeea2▪ #d4d9d8Sell: #ffeea2%product_price_sell_formatted%#898989 (Right-Click) (#ffeea2%product_stock_global_sell_amount_left% #898989left)'
+      - '#ffeea2▪ #d4d9d8Sell All: #ffeea2%product_price_sell_all_formatted%#898989 (F/Swap Key)'
       - ''
-      - '#9af7ffLeft-Click &8→ &fSelect Quantity &8← #9af7ffRight-Click'
-      - '#9af7ffShift-Left &8→ &fBuy &7(Quick) &fSell &8← #9af7ffShift-Right'
-      - '#9af7ffF Key &8→ &fSell All &7(%product_price_sell_all_formatted%)'
+      - '#898989(Hold #ffeea2Shift#898989 for quick buy/sell)'
 
 Content:
-  info_:
-    Slots: 4
-    Item:
-      Material: PLAYER_HEAD
-      Head_Texture: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmEyYWZhN2JiMDYzYWMxZmYzYmJlMDhkMmM1NThhN2RmMmUyYmFjZGYxNWRhYzJhNjQ2NjJkYzQwZjhmZGJhZCJ9fX0='
-      Name: '#ee9aff&lShop Info'
-      Lore:
-        - '#ddeceeYou are viewing products'
-        - '#ddeceeof the shop owned by #ee9aff%shop_owner%#ddecee.'
-        - ''
-        - '#ee9aff▪ #ddeceeAdmin Shop: #ee9aff%shop_is_admin%'
-        - '#ee9aff▪ #ddeceeCan Buy: #ee9aff%shop_buy_allowed%'
-        - '#ee9aff▪ #ddeceeCan Sell: #ee9aff%shop_sell_allowed%'
-
-  pane2:
+  dummy:
     Priority: -1
     Slots: 11,12,13,14,15
     Type: NONE
     Item:
-      Material: GRAY_DYE
-      Name: '#5d6d7e<Empty Slot>'
-
+      Material: PLAYER_HEAD
+      Head_Texture: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTE5ZDY0NjEyYmE4ZDFjMDJlZTI3MGQ4NDUxOWFkMGNkNzMxNzViYzQ1ZTdkZGEzZjYzOTY4NmIyY2U2NDU5NiJ9fX0='
+      Name: '#898989<Empty Slot>'
+  
   page_next:
     Priority: 5
     Slots: 17
@@ -46,7 +34,7 @@ Content:
       Material: PLAYER_HEAD
       Head_Texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjgyYWQxYjljYjRkZDIxMjU5YzBkNzVhYTMxNWZmMzg5YzNjZWY3NTJiZTM5NDkzMzgxNjRiYWM4NGE5NmUifX19
       Name: '#e3fbf9(→) &lNext Page'
-
+  
   page_previous:
     Priority: 5
     Slots: 9

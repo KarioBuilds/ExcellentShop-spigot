@@ -14,13 +14,19 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import su.nexmedia.engine.Version;
+import su.nexmedia.engine.api.placeholder.PlaceholderMap;
 import su.nexmedia.engine.utils.Colorizer;
 import su.nexmedia.engine.utils.EngineUtils;
+import su.nexmedia.engine.utils.ItemUtil;
+import su.nexmedia.engine.utils.Reflex;
 import su.nightexpress.nexshop.ExcellentShop;
+import su.nightexpress.nexshop.api.shop.type.TradeType;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
+import su.nightexpress.nexshop.shop.chest.Placeholders;
 import su.nightexpress.nexshop.shop.chest.config.ChestConfig;
+import su.nightexpress.nexshop.shop.chest.impl.ChestProduct;
 import su.nightexpress.nexshop.shop.chest.impl.ChestShop;
-import su.nightexpress.nexshop.shop.chest.display.DisplayUpdateTask;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,16 +36,17 @@ import java.util.stream.IntStream;
 
 public class DisplayHandler {
 
+    private static final Class<?>      NMS_ENTITY          = Reflex.getClass("net.minecraft.world.entity", "Entity");
+    private static final String        ENTITY_COUNTER_NAME = Version.isAtLeast(Version.V1_19_R3) ? "d" : "c";
+    public static final  AtomicInteger ENTITY_COUNTER      = (AtomicInteger) Reflex.getFieldValue(NMS_ENTITY, ENTITY_COUNTER_NAME);
+
     private final ChestShopModule           module;
     private final Map<String, Set<Integer>> entityIdMap;
-    private final AtomicInteger             entityCounter;
     private final DisplayUpdateTask         updateTask;
 
     public DisplayHandler(@NotNull ExcellentShop plugin, @NotNull ChestShopModule module) {
-        //this.plugin = plugin;
         this.module = module;
         this.entityIdMap = new HashMap<>();
-        this.entityCounter = new AtomicInteger(0);
         this.updateTask = new DisplayUpdateTask(plugin, this);
     }
 
@@ -51,7 +58,6 @@ public class DisplayHandler {
         this.updateTask.stop();
         this.entityIdMap.values().forEach(set -> set.forEach(this::destroyEntity));
         this.entityIdMap.clear();
-        this.entityCounter.set(0);
     }
 
     public void update() {
@@ -69,9 +75,7 @@ public class DisplayHandler {
     }
 
     public int nextEntityId() {
-        this.entityCounter.compareAndSet(Integer.MIN_VALUE, 0);
-
-        return this.entityCounter.decrementAndGet();
+        return ENTITY_COUNTER.incrementAndGet();
     }
 
     public void create(@NotNull ChestShop shop) {
@@ -87,9 +91,22 @@ public class DisplayHandler {
 
 
         Set<Integer> entityIds = this.entityIdMap.computeIfAbsent(shop.getId(), k -> new HashSet<>());
+        ChestProduct product = shop.getRandomProduct();
+
 
         if (ChestConfig.DISPLAY_HOLOGRAM_ENABLED.get()) {
-            List<String> text = new ArrayList<>(shop.getDisplayText());
+            //List<String> text = new ArrayList<>(shop.getDisplayText());
+            List<String> text = shop.getDisplayText();
+            PlaceholderMap placeholderMap = new PlaceholderMap(shop.getPlaceholders());
+            for (TradeType tradeType : TradeType.values()) {
+                placeholderMap.add(Placeholders.GENERIC_PRODUCT_PRICE.apply(tradeType), () -> {
+                    return product == null ? "-" : product.getCurrency().format(product.getPricer().getPrice(tradeType));
+                });
+            }
+            placeholderMap.add(Placeholders.GENERIC_PRODUCT_NAME, () -> product == null ? "-" : ItemUtil.getItemName(product.getPreview()));
+
+            text.replaceAll(placeholderMap.replacer());
+
             Collections.reverse(text);
             Location hologramLocation = shop.getDisplayTextLocation().clone();
             for (String line : text) {
@@ -98,9 +115,9 @@ public class DisplayHandler {
             }
         }
 
-        ItemStack product = shop.getDisplayProduct();
-        if (product != null) {
-            entityIds.add(this.spawnItem(players, shop.getDisplayItemLocation(), product));
+        ItemStack displayProduct = product == null ? null : product.getPreview();//shop.getDisplayProduct();
+        if (displayProduct != null) {
+            entityIds.add(this.spawnItem(players, shop.getDisplayItemLocation(), displayProduct));
         }
 
         ItemStack showcase = shop.getShowcaseItem();
