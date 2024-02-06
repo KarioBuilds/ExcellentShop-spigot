@@ -78,6 +78,18 @@
             <url>https://hub.jeff-media.com/nexus/repository/jeff-media-public/</url>
         </repository>
 
+        <!-- PlayerAnimator -->
+        <repository>
+            <id>mineinabyss</id>
+            <url>https://repo.mineinabyss.com/releases</url>
+        </repository>
+
+        <!-- actions-code, actions-spigot -->
+        <repository>
+            <id>triumphteam</id>
+            <url>https://repo.triumphteam.dev/snapshots</url>
+        </repository>
+
     </repositories>
 
     <dependencies>
