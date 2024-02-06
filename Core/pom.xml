@@ -59,11 +59,6 @@
         </repository>
 
         <repository>
-            <id>intellectualsites snapshots</id>
-            <url>https://mvn.intellectualsites.com/content/repositories/snapshots/</url>
-        </repository>
-
-        <repository>
             <id>sk89q-repo</id>
             <url>https://maven.enginehub.org/repo/</url>
         </repository>
@@ -118,7 +113,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.th0rgal</groupId>
+            <groupId>com.github.oraxen</groupId>
             <artifactId>oraxen</artifactId>
             <version>1.168.0</version>
             <scope>provided</scope>
