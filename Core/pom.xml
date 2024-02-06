@@ -19,11 +19,6 @@
     <repositories>
 
         <repository>
-            <id>alex9849</id>
-            <url>https://nexus.alex9849.net/repository/maven-releases/</url>
-        </repository>
-
-        <repository>
             <id>everything</id>
             <url>https://repo.citizensnpcs.co/</url>
         </repository>
@@ -31,16 +26,6 @@
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
-        </repository>
-
-        <repository>
-            <id>oraxen</id>
-            <url>https://repo.oraxen.com/releases</url>
-        </repository>
-
-        <repository>
-            <id>sk89q-repo</id>
-            <url>https://maven.enginehub.org/repo/</url>
         </repository>
 
         <repository>
@@ -73,6 +58,26 @@
             <url>https://repo.dmulloy2.net/repository/public/</url>
         </repository>
 
+        <repository>
+            <id>oraxen</id>
+            <url>https://repo.oraxen.com/releases</url>
+        </repository>
+
+        <repository>
+            <id>sk89q-repo</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
+
+        <repository>
+            <id>alex9849</id>
+            <url>https://nexus.alex9849.net/repository/maven-releases/</url>
+        </repository>
+
+        <repository>
+            <id>jeff-media-public</id>
+            <url>https://hub.jeff-media.com/nexus/repository/jeff-media-public/</url>
+        </repository>
+
     </repositories>
 
     <dependencies>
@@ -92,6 +97,7 @@
             <groupId>net.alex9849.advancedregionmarket</groupId>
             <artifactId>advancedregionmarket</artifactId>
             <version>3.5.3</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>me.clip</groupId>
@@ -102,7 +108,8 @@
         <dependency>
             <groupId>io.th0rgal</groupId>
             <artifactId>oraxen</artifactId>
-            <version>1.166.0</version>
+            <version>1.168.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.black_ixx</groupId>
@@ -138,7 +145,9 @@
         <dependency>
             <groupId>me.mraxetv.beasttokens</groupId>
             <artifactId>BeastTokens</artifactId>
-            <version>3.11.1</version>
+            <version>3.11.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../libs/bt-api-3.11.0.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.bencodez</groupId>
@@ -150,6 +159,7 @@
             <groupId>com.github.Ghost-chu</groupId>
             <artifactId>GemsEconomy</artifactId>
             <version>74073694a3</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.github.LoneDev6</groupId>
@@ -160,17 +170,21 @@
         <dependency>
             <groupId>com.magmaguy.elitemobs</groupId>
             <artifactId>EliteMobs</artifactId>
-            <version>8.6.2-SNAPSHOT</version>
+            <version>8.7.5-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../libs/EliteMobs.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>su.nightexpress.coinsengine</groupId>
             <artifactId>CoinsEngine</artifactId>
             <version>2.1.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>me.TechsCode</groupId>
             <artifactId>UltraEconomyAPI</artifactId>
             <version>2.6.4</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
