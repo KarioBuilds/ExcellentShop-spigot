@@ -13,7 +13,7 @@ import su.nightexpress.nexshop.currency.handler.*;
 import su.nightexpress.nexshop.currency.impl.CoinsEngineCurrency;
 import su.nightexpress.nexshop.currency.impl.ConfigCurrency;
 import su.nightexpress.nexshop.currency.impl.DummyCurrency;
-import su.nightexpress.nexshop.currency.impl.UltraEconomyCurrency;
+//import su.nightexpress.nexshop.currency.impl.UltraEconomyCurrency;
 import su.nightexpress.nexshop.hook.HookId;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.integration.VaultHook;
