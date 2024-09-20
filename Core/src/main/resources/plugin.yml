@@ -22,5 +22,8 @@ softdepend:
   - Oraxen
   - ItemsAdder
   - MMOItems
+  - ExcellentCrates
   - PlaceholderAPI
+  - ProtocolLib
+  - packetevents
 api-version: 1.18
