@@ -1,6 +1,6 @@
 package su.nightexpress.nexshop.currency;
 
-import me.TechsCode.UltraEconomy.UltraEconomy;
+//import me.TechsCode.UltraEconomy.UltraEconomy;
 import me.xanium.gemseconomy.GemsEconomy;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -112,11 +112,11 @@ public class CurrencyManager extends AbstractManager<ShopPlugin> {
             }
         }
 
-        if (Plugins.isInstalled(HookId.ULTRA_ECONOMY)) {
-            UltraEconomy.getAPI().getCurrencies().forEach(currency -> {
-                this.registerCurrency(new UltraEconomyCurrency(currency));
-            });
-        }
+//        if (Plugins.isInstalled(HookId.ULTRA_ECONOMY)) {
+//            UltraEconomy.getAPI().getCurrencies().forEach(currency -> {
+//                this.registerCurrency(new UltraEconomyCurrency(currency));
+//            });
+//        }
 
         this.config.saveChanges();
     }
