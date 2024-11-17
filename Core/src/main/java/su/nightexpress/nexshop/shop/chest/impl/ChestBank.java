@@ -5,8 +5,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nightexpress.nexshop.api.currency.Currency;
-import su.nightexpress.nexshop.api.currency.CurrencyOfflineHandler;
+import su.nightexpress.economybridge.api.Currency;
 import su.nightexpress.nexshop.shop.chest.config.ChestConfig;
 
 import java.util.Map;
@@ -46,17 +45,20 @@ public class ChestBank {
         if (amount <= 0) return false;
 
         Player player = this.getOnlinePlayer();
-        if (player != null && ChestConfig.SHOP_AUTO_BANK.get()) {
-            currency.getHandler().give(player, amount);
+        if (player != null && ChestConfig.isAutoBankEnabled()) {
+            currency.give(player, amount);
             return true;
         }
 
-        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
-            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
-            if (offlineHandler != null) {
-                offlineHandler.give(this.getHolder(), amount);
-                return true;
-            }
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get() && currency.canHandleOffline()) {
+            currency.give(this.holder, amount);
+            return true;
+
+//            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+//            if (offlineHandler != null) {
+//                offlineHandler.give(this.getHolder(), amount);
+//                return true;
+//            }
         }
 
         double balance = this.getBalance(currency) + amount;
@@ -68,17 +70,20 @@ public class ChestBank {
         if (!this.hasEnough(currency, amount)) return false;
 
         Player player = this.getOnlinePlayer();
-        if (player != null && ChestConfig.SHOP_AUTO_BANK.get()) {
-            currency.getHandler().take(player, amount);
+        if (player != null && ChestConfig.isAutoBankEnabled()) {
+            currency.take(player, amount);
             return true;
         }
 
-        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
-            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
-            if (offlineHandler != null) {
-                offlineHandler.take(this.getHolder(), amount);
-                return true;
-            }
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get() && currency.canHandleOffline()) {
+            currency.take(this.holder, amount);
+            return true;
+
+//            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+//            if (offlineHandler != null) {
+//                offlineHandler.take(this.getHolder(), amount);
+//                return true;
+//            }
         }
 
         double balance = this.getBalance(currency) - amount;
@@ -88,15 +93,17 @@ public class ChestBank {
 
     public double getBalance(@NotNull Currency currency) {
         Player player = this.getOnlinePlayer();
-        if (player != null && ChestConfig.SHOP_AUTO_BANK.get()) {
-            return currency.getHandler().getBalance(player);
+        if (player != null && ChestConfig.isAutoBankEnabled()) {
+            return currency.getBalance(player);
         }
 
-        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
-            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
-            if (offlineHandler != null) {
-                return offlineHandler.getBalance(this.getHolder());
-            }
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get() && currency.canHandleOffline()) {
+            return currency.getBalance(this.holder);
+
+//            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+//            if (offlineHandler != null) {
+//                return offlineHandler.getBalance(this.getHolder());
+//            }
         }
 
         return this.getBalanceMap().getOrDefault(currency, 0D);
@@ -104,15 +111,16 @@ public class ChestBank {
 
     public boolean hasEnough(@NotNull Currency currency, double amount) {
         Player player = this.getOnlinePlayer();
-        if (player != null && ChestConfig.SHOP_AUTO_BANK.get()) {
-            return currency.getHandler().getBalance(player) >= amount;
+        if (player != null && ChestConfig.isAutoBankEnabled()) {
+            return currency.getBalance(player) >= amount;
         }
 
-        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get()) {
-            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
-            if (offlineHandler != null) {
-                return offlineHandler.getBalance(this.getHolder()) >= amount;
-            }
+        if (player == null && ChestConfig.SHOP_OFFLINE_TRANSACTIONS.get() && currency.canHandleOffline()) {
+            return currency.getBalance(this.holder) >= amount;
+//            CurrencyOfflineHandler offlineHandler = currency.getOfflineHandler();
+//            if (offlineHandler != null) {
+//                return offlineHandler.getBalance(this.getHolder()) >= amount;
+//            }
         }
 
         return this.getBalance(currency) >= amount;

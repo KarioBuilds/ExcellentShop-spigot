@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.nexshop.api.shop.type.TradeType;
 import su.nightexpress.nexshop.config.Lang;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static su.nightexpress.nightcore.util.text.tag.Tags.*;
-import static su.nightexpress.nexshop.shop.chest.Placeholders.*;
+import static su.nightexpress.nexshop.Placeholders.*;
 
 public class ShopSettingsMenu extends ShopEditorMenu implements Linked<ChestShop>, ShopEditor {
 
@@ -127,14 +128,14 @@ public class ShopSettingsMenu extends ShopEditorMenu implements Linked<ChestShop
         this.getItems().forEach(menuItem -> {
             menuItem.getOptions().addDisplayModifier((viewer, item) -> {
                 ItemReplacer.create(item).readMeta().trimmed()
-                    .replace(this.getLink(viewer).getPlaceholders())
+                    .replace(this.getLink(viewer).replacePlaceholders())
                     .replacePlaceholderAPI(viewer.getPlayer())
                     .writeMeta();
             });
 
             if (menuItem.getHandler() == this.bankHandler) {
                 menuItem.getOptions().setVisibilityPolicy(viewer -> {
-                    if (ChestConfig.SHOP_AUTO_BANK.get()) return false;
+                    if (ChestConfig.isAutoBankEnabled()) return false;
                     if (viewer.getPlayer().hasPermission(ChestPerms.COMMAND_BANK_OTHERS)) return true;
 
                     return this.getLink(viewer).isOwner(viewer.getPlayer());
@@ -211,7 +212,7 @@ public class ShopSettingsMenu extends ShopEditorMenu implements Linked<ChestShop
         ItemUtil.editMeta(bankItem, meta -> {
             meta.setDisplayName(LIGHT_YELLOW.enclose(BOLD.enclose("Bank")));
             meta.setLore(Lists.newList(
-                LIGHT_YELLOW.enclose("▪ " + LIGHT_GRAY.enclose("Balance: ") + SHOP_BANK_BALANCE),
+                LIGHT_YELLOW.enclose("▪ " + LIGHT_GRAY.enclose("Balance: ") + Placeholders.CHEST_SHOP_BANK_BALANCE),
                 "",
                 LIGHT_GRAY.enclose("Bank used to store your funds."),
                 "",
@@ -266,7 +267,7 @@ public class ShopSettingsMenu extends ShopEditorMenu implements Linked<ChestShop
         ItemUtil.editMeta(typeItem, meta -> {
             meta.setDisplayName(LIGHT_YELLOW.enclose(BOLD.enclose("Shop Type")));
             meta.setLore(Lists.newList(
-                LIGHT_YELLOW.enclose("✔ " + LIGHT_GRAY.enclose("Current: ") + SHOP_TYPE),
+                LIGHT_YELLOW.enclose("✔ " + LIGHT_GRAY.enclose("Current: ") + Placeholders.CHEST_SHOP_TYPE),
                 "",
                 LIGHT_GRAY.enclose("Setting shop as " + LIGHT_YELLOW.enclose("admin shop") + " will"),
                 LIGHT_GRAY.enclose("make it with unlimited funds and items."),
