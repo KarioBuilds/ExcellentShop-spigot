@@ -54,11 +54,6 @@
         </repository>
 
         <repository>
-            <id>oraxen</id>
-            <url>https://repo.oraxen.com/releases/</url>
-        </repository>
-
-        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
