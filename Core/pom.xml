@@ -162,6 +162,10 @@
                     <groupId>gs.mclo</groupId>
                     <artifactId>java</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>io.th0rgal</groupId>
+                    <artifactId>v1_2*</artifactId>
+                </exclusion>
             </exclusions>
             <scope>provided</scope>
         </dependency>
