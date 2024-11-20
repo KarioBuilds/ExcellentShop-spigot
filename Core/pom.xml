@@ -163,27 +163,27 @@
                     <artifactId>java</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>io.th0rgal</groupId>
+                    <groupId>oraxen</groupId>
                     <artifactId>v1_20_R1</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>io.th0rgal</groupId>
+                    <groupId>oraxen</groupId>
                     <artifactId>v1_20_R2</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>io.th0rgal</groupId>
+                    <groupId>oraxen</groupId>
                     <artifactId>v1_20_R3</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>io.th0rgal</groupId>
+                    <groupId>oraxen</groupId>
                     <artifactId>v1_20_R4</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>io.th0rgal</groupId>
+                    <groupId>oraxen</groupId>
                     <artifactId>v1_21_R1</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>io.th0rgal</groupId>
+                    <groupId>oraxen</groupId>
                     <artifactId>v1_21_R2</artifactId>
                 </exclusion>
             </exclusions>
