@@ -3,8 +3,8 @@ package su.nightexpress.nexshop.auction.config;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import su.nightexpress.economybridge.currency.CurrencyId;
-import su.nightexpress.nexshop.auction.Placeholders;
-import su.nightexpress.nexshop.hook.HookId;
+import su.nightexpress.economybridge.item.ItemPlugins;
+import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.util.BukkitThing;
 import su.nightexpress.nightcore.util.Lists;
@@ -43,6 +43,10 @@ public class AuctionConfig {
         "Players can not add items to the Auction in the following gamemodes.",
         "https://hub.spigotmc.org/javadocs/spigot/org/bukkit/GameMode.html"
     );
+
+    public static final ConfigValue<Boolean> LISTINGS_HIDE_ATTRIBUTES = ConfigValue.create("Settings.Listings.Hide_Attributes",
+        false,
+        "When enabled, will hide item attributes (damage, durability, etc.) of auction listings.");
 
     public static final ConfigValue<Long> LISTINGS_EXPIRE_TIME = ConfigValue.create("Settings.Listings.Expire_In",
         604800L,
@@ -137,7 +141,7 @@ public class AuctionConfig {
         ),
         "List of items that can not be added as shop products.",
         "Vanilla Names: https://minecraft.wiki/w/Java_Edition_data_values -> Blocks / Items -> Resource location column.",
-        "Supported Plugins: " + String.join(", ", HookId.getItemPluginNames())
+        "Supported Plugins: " + String.join(", ", ItemPlugins.values())
     );
 
     public static final ConfigValue<Set<String>> LISTINGS_DISABLED_NAMES = ConfigValue.create("Settings.Listings.Disabled_Names",

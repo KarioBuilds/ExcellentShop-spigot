@@ -6,6 +6,8 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.nexshop.auction.AuctionManager;
+import su.nightexpress.nexshop.auction.AuctionUtils;
+import su.nightexpress.nexshop.auction.config.AuctionConfig;
 import su.nightexpress.nexshop.auction.listing.ActiveListing;
 import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.config.FileConfig;
@@ -25,7 +27,7 @@ import su.nightexpress.nightcore.util.Lists;
 import java.util.ArrayList;
 import java.util.List;
 
-import static su.nightexpress.nexshop.auction.Placeholders.*;
+import static su.nightexpress.nexshop.Placeholders.*;
 import static su.nightexpress.nightcore.util.text.tag.Tags.*;
 
 public class PurchaseConfirmMenu extends ConfigMenu<ShopPlugin> implements Linked<ActiveListing> {
@@ -63,7 +65,7 @@ public class PurchaseConfirmMenu extends ConfigMenu<ShopPlugin> implements Linke
                 ActiveListing listing = this.getLink(viewer);
 
                 ItemReplacer.create(item).readMeta()
-                    .replace(listing.getPlaceholders())
+                    .replace(listing.replacePlaceholders())
                     .replace(GENERIC_BALANCE, () -> listing.getCurrency().format(listing.getCurrency().getBalance(viewer.getPlayer())))
                     .replacePlaceholderAPI(viewer.getPlayer())
                     .writeMeta();
@@ -82,6 +84,9 @@ public class PurchaseConfirmMenu extends ConfigMenu<ShopPlugin> implements Linke
         ActiveListing listing = this.getLink(viewer);
 
         ItemStack item = new ItemStack(listing.getItemStack()); // Copy to prevent modifying
+
+        AuctionUtils.hideListingAttributes(item);
+
         MenuItem menuItem = new MenuItem(item);
         menuItem.setSlots(this.itemSlot);
         menuItem.setOptions(ItemOptions.personalWeak(viewer.getPlayer()));

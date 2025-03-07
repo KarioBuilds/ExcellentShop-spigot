@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.economybridge.api.Currency;
 import su.nightexpress.nexshop.auction.AuctionManager;
+import su.nightexpress.nexshop.auction.AuctionUtils;
 import su.nightexpress.nexshop.auction.ListingCategory;
 import su.nightexpress.nexshop.auction.SortType;
 import su.nightexpress.nexshop.auction.config.AuctionConfig;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static su.nightexpress.nexshop.auction.Placeholders.*;
+import static su.nightexpress.nexshop.Placeholders.*;
 import static su.nightexpress.nightcore.util.text.tag.Tags.*;
 
 public class AuctionMenu extends AbstractAuctionMenu<ActiveListing> {
@@ -211,12 +212,14 @@ public class AuctionMenu extends AbstractAuctionMenu<ActiveListing> {
                 previewLore.addAll(this.lorePreview);
             }
 
+            AuctionUtils.hideListingAttributes(item);
+
             ItemReplacer.create(item).trimmed()
                 .setDisplayName(this.itemName)
                 .setLore(this.itemLore)
                 .injectLore(PLACEHOLDER_LORE_FORMAT, this.getLoreFormat(player, listing))
                 .replaceLoreExact(PLACEHOLDER_ACTION_PREVIEW, previewLore)
-                .replace(listing.getPlaceholders())
+                .replace(listing.replacePlaceholders())
                 .replacePlaceholderAPI(player)
                 .writeMeta();
             return item;

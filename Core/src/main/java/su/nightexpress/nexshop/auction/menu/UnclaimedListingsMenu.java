@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static su.nightexpress.nexshop.auction.Placeholders.*;
+import static su.nightexpress.nexshop.Placeholders.*;
 import static su.nightexpress.nightcore.util.text.tag.Tags.*;
 
 public class UnclaimedListingsMenu extends AbstractAuctionMenu<CompletedListing> {
@@ -41,7 +41,7 @@ public class UnclaimedListingsMenu extends AbstractAuctionMenu<CompletedListing>
         autoFill.setItems(Listings.sorted(this.auctionManager.getListings().getUnclaimed(this.getLink(viewer))));
         autoFill.setClickAction(listing -> (viewer1, event) -> {
             Player player = viewer.getPlayer();
-            this.auctionManager.claimRewards(player, listing);
+            this.auctionManager.claimRewards(player, Lists.newList(listing));
             this.runNextTick(() -> this.flush(viewer));
         });
     }

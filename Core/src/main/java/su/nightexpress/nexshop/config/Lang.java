@@ -2,10 +2,12 @@ package su.nightexpress.nexshop.config;
 
 import org.bukkit.Sound;
 import su.nightexpress.economybridge.Placeholders;
+import su.nightexpress.nexshop.api.shop.product.ProductType;
 import su.nightexpress.nexshop.api.shop.type.PriceType;
 import su.nightexpress.nexshop.api.shop.type.TradeType;
 import su.nightexpress.nightcore.core.CoreLang;
 import su.nightexpress.nightcore.language.entry.LangEnum;
+import su.nightexpress.nightcore.language.entry.LangItem;
 import su.nightexpress.nightcore.language.entry.LangString;
 import su.nightexpress.nightcore.language.entry.LangText;
 
@@ -17,9 +19,10 @@ import static su.nightexpress.nightcore.language.tag.MessageTags.*;
 
 public class Lang extends CoreLang {
 
-    public static final LangEnum<DayOfWeek> DAYS        = LangEnum.of("Days", DayOfWeek.class);
-    public static final LangEnum<TradeType> TRADE_TYPES = LangEnum.of("TradeType", TradeType.class);
-    public static final LangEnum<PriceType> PRICE_TYPES = LangEnum.of("PriceType", PriceType.class);
+    public static final LangEnum<DayOfWeek>   DAYS          = LangEnum.of("Days", DayOfWeek.class);
+    public static final LangEnum<TradeType>   TRADE_TYPES   = LangEnum.of("TradeType", TradeType.class);
+    public static final LangEnum<PriceType>   PRICE_TYPES   = LangEnum.of("PriceType", PriceType.class);
+    public static final LangEnum<ProductType> PRODUCT_TYPES = LangEnum.of("ProductType", ProductType.class);
 
     public static final LangString COMMAND_ARGUMENT_NAME_NAME     = LangString.of("Command.Argument.Name.Name", "name");
     public static final LangString COMMAND_ARGUMENT_NAME_CURRENCY = LangString.of("Command.Argument.Name.Currency", "currency");
@@ -94,10 +97,10 @@ public class Lang extends CoreLang {
         SOUND.enclose(Sound.ENTITY_VILLAGER_NO),
         LIGHT_RED.enclose(BOLD.enclose("Sorry! ")) + LIGHT_GRAY.enclose("You have to clean up your inventory before purchase!"));
 
-    public static final LangText SHOP_CART_ENTER_AMOUNT = LangText.of("Shop.Cart.EnterAmount",
-        OUTPUT.enclose(20, 1200),
-        LIGHT_GREEN.enclose(BOLD.enclose("< Custom Amount >")),
-        LIGHT_GRAY.enclose("Enter your amount")
+    public static final LangString SHOP_CART_ENTER_AMOUNT = LangString.of("Shop.Cart.CustomAmount",
+        //OUTPUT.enclose(20, 1200),
+        //LIGHT_GREEN.enclose(BOLD.enclose("< Custom Amount >")),
+        LIGHT_GRAY.enclose("Enter your amount...")
     );
 
 
@@ -110,6 +113,12 @@ public class Lang extends CoreLang {
     public static final LangString EDITOR_PRICE_FLOAT_NO_TIMES = LangString.of("Editor.Price.Float.NoTimes",
         "No times set. Price won't refresh properly.");
 
+    public static final LangItem EDITOR_GENERIC_BROKEN_ITEM = LangItem.of("Editor.Generic.BrokenItem",
+        LIGHT_RED.enclose(BOLD.enclose("< Invalid Item> ")),
+        LIGHT_GRAY.enclose("Item tag/ID is broken"),
+        LIGHT_GRAY.enclose("or invalid.")
+    );
+
     public static final LangString EDITOR_GENERIC_ENTER_NAME = LangString.of("Editor.Generic.Enter.Name",
         LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[Name]")));
 
@@ -120,10 +129,10 @@ public class Lang extends CoreLang {
         LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[Value]")));
 
     public static final LangString EDITOR_GENERIC_ENTER_DAY = LangString.of("Editor.Generic.Enter.Day",
-        LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[English Day Name]")));
+        LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[Day Name]")));
 
     public static final LangString EDITOR_GENERIC_ENTER_TIME = LangString.of("Editor.Generic.Enter.Time",
-        LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[Hours:Minutes:Seconds]")));
+        LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[Time]") + " like " + LIGHT_GREEN.enclose("22:00")));
 
     public static final LangString EDITOR_GENERIC_ENTER_SECONDS = LangString.of("Editor.Generic.Enter.Seconds",
         LIGHT_GRAY.enclose("Enter " + LIGHT_GREEN.enclose("[Seconds Amount]")));

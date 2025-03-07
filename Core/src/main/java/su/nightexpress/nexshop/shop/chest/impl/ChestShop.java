@@ -16,27 +16,24 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.economybridge.EconomyBridge;
-import su.nightexpress.economybridge.currency.CurrencyId;
-import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.economybridge.api.Currency;
-import su.nightexpress.nexshop.api.shop.handler.ItemHandler;
-import su.nightexpress.nexshop.api.shop.handler.ProductHandler;
-import su.nightexpress.nexshop.api.shop.packer.ItemPacker;
-import su.nightexpress.nexshop.api.shop.packer.ProductPacker;
+import su.nightexpress.economybridge.currency.CurrencyId;
+import su.nightexpress.nexshop.Placeholders;
+import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.nexshop.api.shop.product.Product;
+import su.nightexpress.nexshop.api.shop.product.ProductType;
+import su.nightexpress.nexshop.api.shop.product.typing.PhysicalTyping;
+import su.nightexpress.nexshop.api.shop.product.typing.ProductTyping;
 import su.nightexpress.nexshop.api.shop.type.TradeType;
-import su.nightexpress.nexshop.product.ProductHandlerRegistry;
-import su.nightexpress.nexshop.product.packer.impl.BukkitItemPacker;
+import su.nightexpress.nexshop.product.price.AbstractProductPricer;
+import su.nightexpress.nexshop.product.type.ProductTypes;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
 import su.nightexpress.nexshop.shop.chest.ChestUtils;
-import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nexshop.shop.chest.config.ChestConfig;
 import su.nightexpress.nexshop.shop.chest.config.ChestLang;
 import su.nightexpress.nexshop.shop.chest.util.BlockPos;
 import su.nightexpress.nexshop.shop.chest.util.ShopType;
-import su.nightexpress.nexshop.product.price.AbstractProductPricer;
 import su.nightexpress.nexshop.shop.impl.AbstractShop;
-import su.nightexpress.nexshop.product.handler.impl.BukkitItemHandler;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.util.LocationUtil;
 import su.nightexpress.nightcore.util.Pair;
@@ -70,18 +67,18 @@ public class ChestShop extends AbstractShop<ChestProduct> {
     private Location displayItemLocation;
     private Location displayShowcaseLocation;
 
-    private final ChestStock stock;
+    //private final ChestStock stock;
 
     public ChestShop(@NotNull ShopPlugin plugin, @NotNull ChestShopModule module, @NotNull File file, @NotNull String id) {
         super(plugin, file, id);
         this.module = module;
-        this.stock = new ChestStock(this.plugin, this);
+        //this.stock = new ChestStock(this.plugin, this);
     }
 
     @Override
     @NotNull
     public UnaryOperator<String> replacePlaceholders() {
-        return su.nightexpress.nexshop.Placeholders.forChestShop(this);
+        return Placeholders.forChestShop(this);
     }
 
     @Override
@@ -124,10 +121,8 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         this.setName(config.getString("Name", this.getOwnerName()));
         this.setType(config.getEnum("Type", ShopType.class, ShopType.PLAYER));
         this.setItemCreated(config.getBoolean("ItemCreated", false));
-
-        for (TradeType tradeType : TradeType.values()) {
-            this.setTransactionEnabled(tradeType, config.getBoolean("Transaction_Allowed." + tradeType.name(), true));
-        }
+        this.setBuyingAllowed(config.getBoolean("Transaction_Allowed.BUY", true));
+        this.setSellingAllowed(config.getBoolean("Transaction_Allowed.SELL", true));
 
         this.setHologramEnabled(config.getBoolean("Display.Hologram.Enabled", true));
         this.setShowcaseEnabled(config.getBoolean("Display.Showcase.Enabled", true));
@@ -162,18 +157,25 @@ public class ChestShop extends AbstractShop<ChestProduct> {
             config.set(path + ".Content.Item", itemOld);
         }
 
-        String handlerId = config.getString(path + ".Handler", BukkitItemHandler.NAME);
-        ProductHandler handler = ProductHandlerRegistry.getHandler(handlerId);
-        if (handler == null) {
-            handler = ProductHandlerRegistry.getDummyHandler();
-            this.module.warn("Invalid handler '" + handlerId + "' for '" + id + "' product in '" + this.getId() + "' shop. Install missing plugin or change product in GUI.");
+        if (!config.contains(path + ".Type")) {
+            String handlerId = config.getString(path + ".Handler", "bukkit_item");
+            if (handlerId.equalsIgnoreCase("bukkit_command")) {
+                config.set(path + ".Type", ProductType.COMMAND.name());
+            }
+            else if (handlerId.equalsIgnoreCase("bukkit_item")) {
+                config.set(path + ".Type", ProductType.VANILLA.name());
+            }
+            else {
+                config.set(path + ".Type", ProductType.PLUGIN.name());
+            }
         }
 
-        ProductPacker packer = handler.createPacker(config, path);
+        ProductType typed = config.getEnum(path + ".Type", ProductType.class, ProductType.VANILLA);
+        ProductTyping typing = ProductTypes.read(this.module, typed, config, path);
 
         int infQuantity = config.getInt(path + ".InfiniteStorage.Quantity");
 
-        ChestProduct product = new ChestProduct(this.plugin, id, this, currency, handler, packer);
+        ChestProduct product = new ChestProduct(this.plugin, id, this, currency, typing);
         product.setPricer(AbstractProductPricer.read(config, path + ".Price"));
         product.setQuantity(infQuantity);
         return product;
@@ -192,6 +194,11 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         config.saveChanges();
     }
 
+    @Override
+    public void saveRotations() {
+        // TODO wtf
+    }
+
     private void writeSettings(@NotNull FileConfig config) {
         this.blockPos.write(config, "Placement.BlockPos");
         config.set("Placement.World", this.worldName);
@@ -199,9 +206,8 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         config.set("Owner.Id", this.getOwnerId().toString());
         config.set("Type", this.getType().name());
         config.set("ItemCreated", this.isItemCreated());
-        this.transactions.forEach((type, isAllowed) -> {
-            config.set("Transaction_Allowed." + type.name(), isAllowed);
-        });
+        config.set("Transaction_Allowed.BUY", this.buyingAllowed);
+        config.set("Transaction_Allowed.SELL", this.sellingAllowed);
         config.set("Display.Hologram.Enabled", this.isHologramEnabled());
         config.set("Display.Showcase.Enabled", this.isShowcaseEnabled());
         config.set("Display.Showcase.Type", this.getShowcaseType());
@@ -236,7 +242,7 @@ public class ChestShop extends AbstractShop<ChestProduct> {
     }
 
     public boolean isActive() {
-        return active;
+        return this.active;
     }
 
     public boolean isInactive() {
@@ -355,11 +361,11 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         return module;
     }
 
-    @NotNull
-    @Override
-    public ChestStock getStock() {
-        return stock;
-    }
+//    @NotNull
+//    @Override
+//    public ChestStock getStock() {
+//        return stock;
+//    }
 
     @NotNull
     public ChestBank getOwnerBank() {
@@ -390,12 +396,12 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         return products.isEmpty() ? null : Rnd.get(products);
     }
 
-    @Override
-    public void addProduct(@NotNull Product product) {
-        if (product instanceof ChestProduct chestProduct) {
-            this.addProduct(chestProduct);
-        }
-    }
+//    @Override
+//    public void addProduct(@NotNull Product product) {
+//        if (product instanceof ChestProduct chestProduct) {
+//            this.addProduct(chestProduct);
+//        }
+//    }
 
     @Nullable
     public ChestProduct createProduct(@NotNull Player player, @NotNull ItemStack item, boolean bypassHandler) {
@@ -412,22 +418,9 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         }
 
         String id = UUID.randomUUID().toString();
-
-        ItemHandler handler;
-        if (bypassHandler) {
-            handler = ProductHandlerRegistry.forBukkitItem();
-        }
-        else handler = ProductHandlerRegistry.getHandler(stack);
-
-        ProductPacker packer = handler.createPacker(stack);
-        if (packer == null) return null;
-
-        if (packer instanceof BukkitItemPacker itemPacker) {
-            itemPacker.setRespectItemMeta(true); // Always check for similar stack for chest shop.
-        }
-
+        ProductTyping typing = ProductTypes.fromItem(item, bypassHandler);
         Currency currency = this.module.getDefaultCurrency();
-        ChestProduct product = new ChestProduct(this.plugin, id, this, currency, handler, packer);
+        ChestProduct product = new ChestProduct(this.plugin, id, this, currency, typing);
 
         product.setPrice(TradeType.BUY, ChestConfig.SHOP_PRODUCT_INITIAL_BUY_PRICE.get());
         product.setPrice(TradeType.SELL, ChestConfig.SHOP_PRODUCT_INITIAL_SELL_PRICE.get());
@@ -436,10 +429,18 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         return product;
     }
 
+    @Nullable
+    public ChestProduct getProduct(@NotNull ItemStack item) {
+        return this.getValidProducts().stream()
+            .filter(product -> product.getType() instanceof PhysicalTyping typing && typing.isItemMatches(item))
+            .findFirst().orElse(null);
+    }
+
     public boolean isProduct(@NotNull ItemStack item) {
-        return this.getValidProducts().stream().anyMatch(product -> {
-            return product.getPacker() instanceof ItemPacker handler && handler.isItemMatches(item);
-        });
+        return this.getProduct(item) != null;
+//        return this.getValidProducts().stream().anyMatch(product -> {
+//            return product.getPacker() instanceof ItemPacker handler && handler.isItemMatches(item);
+//        });
     }
 
     @Nullable
@@ -454,13 +455,16 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         if (this.isInactive()) return false;
 
         Location location = this.getLocation();
-        Block block = location.getBlock();
-        BlockData data = block.getBlockData();
-        if (data instanceof Directional directional) {
-            Block opposite = block.getRelative(directional.getFacing()).getLocation().clone().add(0, 0.5, 0).getBlock();
-            location = LocationUtil.setCenter3D(opposite.getLocation());
-            location.setDirection(directional.getFacing().getOppositeFace().getDirection());
-            location.setPitch(35F);
+
+        if (ChestConfig.CHECK_SAFE_LOCATION.get()) {
+            Block block = location.getBlock();
+            BlockData data = block.getBlockData();
+            if (data instanceof Directional directional) {
+                Block opposite = block.getRelative(directional.getFacing()).getLocation().clone().add(0, 0.5, 0).getBlock();
+                location = LocationUtil.setCenter3D(opposite.getLocation());
+                location.setDirection(directional.getFacing().getOppositeFace().getDirection());
+                location.setPitch(35F);
+            }
         }
 
         if (!this.isOwner(player) && !ChestUtils.isSafeLocation(location)) {
@@ -549,12 +553,12 @@ public class ChestShop extends AbstractShop<ChestProduct> {
         var buyTextMap = ChestConfig.DISPLAY_HOLOGRAM_TEXT_BUY.get();
         var sellTextMap = ChestConfig.DISPLAY_HOLOGRAM_TEXT_SELL.get();
 
-        boolean isBuyable = this.isTransactionEnabled(TradeType.BUY) && product != null && product.isBuyable();
-        boolean isSellable = this.isTransactionEnabled(TradeType.SELL) & product != null && product.isSellable();
+        boolean isBuyable = product != null && product.isBuyable();
+        boolean isSellable = product != null && product.isSellable();
 
         List<String> text = new ArrayList<>();
         for (String line : this.getDisplayText()) {
-            text.add(0, line
+            text.addFirst(line
                 .replace(Placeholders.GENERIC_BUY, !isBuyable ? "" : buyTextMap.getOrDefault(this.getType(), ""))
                 .replace(Placeholders.GENERIC_SELL, !isSellable ? "" : sellTextMap.getOrDefault(this.getType(), ""))
                 .trim()
