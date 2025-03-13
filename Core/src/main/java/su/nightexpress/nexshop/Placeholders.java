@@ -26,6 +26,7 @@ import su.nightexpress.nexshop.shop.chest.config.ChestConfig;
 import su.nightexpress.nexshop.shop.chest.config.ChestLang;
 import su.nightexpress.nexshop.shop.chest.impl.ChestProduct;
 import su.nightexpress.nexshop.shop.chest.impl.ChestShop;
+import su.nightexpress.nexshop.shop.chest.rent.RentSettings;
 import su.nightexpress.nexshop.shop.virtual.config.VirtualLang;
 import su.nightexpress.nexshop.shop.virtual.config.VirtualPerms;
 import su.nightexpress.nexshop.shop.virtual.impl.Rotation;
@@ -75,6 +76,7 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
     public static final String GENERIC_WEIGHT     = "%weight%";
 
     public static final String                      GENERIC_PRODUCT_NAME    = "%product_name%";
+    public static final String                      GENERIC_PRODUCT_STOCK   = "%product_stock%";
     public static final Function<TradeType, String> GENERIC_PRODUCT_PRICE   = tradeType -> "%product_price_" + tradeType.getLowerCase() + "%";
     public static final String                      GENERIC_SELL_MULTIPLIER = "%sell_multiplier%";
 
@@ -98,20 +100,30 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
     public static final String CHEST_SHOP_Z                = "%shop_location_z%";
     public static final String CHEST_SHOP_WORLD            = "%shop_location_world%";
     public static final String CHEST_SHOP_IS_ADMIN         = "%shop_is_admin%";
-    public static final String CHEST_SHOP_TYPE             = "%shop_type%";
     public static final String CHEST_SHOP_BANK_BALANCE     = "%shop_bank_balance%";
     public static final String CHEST_SHOP_HOLOGRAM_ENABLED = "%shop_hologram_enabled%";
     public static final String CHEST_SHOP_SHOWCASE_ENABLED = "%shop_showcase_enabled%";
+    public static final String CHEST_SHOP_RENT_EXPIRES_IN  = "%shop_rent_expires_in%";
+    public static final String CHEST_SHOP_RENTER_NAME      = "%shop_rented_by%";
+    public static final String CHEST_SHOP_RENT_DURATION      = "%shop_rent_duration%";
+    public static final String CHEST_SHOP_RENT_PRICE      = "%shop_rent_price%";
+
+    public static final String RENT_ENABLED = "%rent_enabled%";
+    public static final String RENT_CURRENCY = "%rent_currency%";
+    public static final String RENT_CURRENCY_NAME = "%rent_currency_name%";
+    public static final String RENT_PRICE = "%rent_price%";
+    public static final String RENT_DURATION = "%rent_duration%";
 
     // Virtual shop
-    public static final String VIRTUAL_SHOP_ICON_NAME            = "%shop_icon_name%";
-    public static final String VIRTUAL_SHOP_DESCRIPTION            = "%shop_description%";
-    public static final String VIRTUAL_SHOP_PERMISSION_REQUIRED    = "%shop_permission_required%";
-    public static final String VIRTUAL_SHOP_PERMISSION_NODE        = "%shop_permission_node%";
-    public static final String VIRTUAL_SHOP_PAGES                  = "%shop_pages%";
-    public static final String VIRTUAL_SHOP_MENU_SLOT              = "%shop_menu_slot%";
-    public static final String VIRTUAL_SHOP_DEFAULT_LAYOUT         = "%shop_layout%";
-    public static final String VIRTUAL_SHOP_DISCOUNT_AMOUNT        = "%shop_discount_amount%";
+    public static final String VIRTUAL_SHOP_ICON_NAME           = "%shop_icon_name%";
+    public static final String VIRTUAL_SHOP_DESCRIPTION         = "%shop_description%";
+    public static final String VIRTUAL_SHOP_PERMISSION_REQUIRED = "%shop_permission_required%";
+    public static final String VIRTUAL_SHOP_PERMISSION_NODE     = "%shop_permission_node%";
+    public static final String VIRTUAL_SHOP_PAGES               = "%shop_pages%";
+    public static final String VIRTUAL_SHOP_ALIASES             = "%shop_aliases%";
+    public static final String VIRTUAL_SHOP_MENU_SLOT           = "%shop_menu_slot%";
+    public static final String VIRTUAL_SHOP_DEFAULT_LAYOUT      = "%shop_layout%";
+    public static final String VIRTUAL_SHOP_DISCOUNT_AMOUNT     = "%shop_discount_amount%";
 
     public static final Function<Integer, String>              CHEST_SHOP_PRODUCT_NAME  = (slot) -> "%shop_product_name_" + slot + "%";
     public static final BiFunction<TradeType, Integer, String> CHEST_SHOP_PRODUCT_PRICE = (tradeType, slot) -> "%shop_product_price_" + tradeType.getLowerCase() + "_" + slot + "%";
@@ -249,9 +261,12 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
             .add(CHEST_SHOP_Z, shop -> NumberUtil.format(shop.getBlockPos().getZ()))
             .add(CHEST_SHOP_WORLD, shop -> shop.isActive() ? LangAssets.get(shop.getWorld()) : shop.getWorldName())
             .add(CHEST_SHOP_IS_ADMIN, shop -> ChestLang.getYesOrNo(shop.isAdminShop()))
-            .add(CHEST_SHOP_TYPE, shop -> ChestLang.SHOP_TYPES.getLocalized(shop.getType()))
             .add(CHEST_SHOP_HOLOGRAM_ENABLED, shop -> ChestLang.getYesOrNo(shop.isHologramEnabled()))
-            .add(CHEST_SHOP_SHOWCASE_ENABLED, shop -> ChestLang.getYesOrNo(shop.isShowcaseEnabled()));
+            .add(CHEST_SHOP_SHOWCASE_ENABLED, shop -> ChestLang.getYesOrNo(shop.isShowcaseEnabled()))
+            .add(CHEST_SHOP_RENT_EXPIRES_IN, shop -> shop.isRented() ? TimeUtil.formatDuration(shop.getRentedUntil()) : "-")
+            .add(CHEST_SHOP_RENTER_NAME, shop -> shop.isRented() ? shop.getRenterName() : "-")
+            .add(CHEST_SHOP_RENT_DURATION, shop -> shop.isRentable() ? TimeUtil.formatTime(shop.getRentSettings().getDurationMillis()) : "-")
+            .add(CHEST_SHOP_RENT_PRICE, shop -> shop.isRentable() ? shop.getRentSettings().getPriceFormatted() : "-");
 
         for (int slot = 0; slot < 27; slot++) {
             int index = slot;
@@ -288,6 +303,7 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
         .add(VIRTUAL_SHOP_PERMISSION_NODE, shop -> VirtualPerms.PREFIX_SHOP + shop.getId())
         .add(VIRTUAL_SHOP_PERMISSION_REQUIRED, shop -> Lang.getYesOrNo(shop.isPermissionRequired()))
         .add(VIRTUAL_SHOP_MENU_SLOT, shop -> shop.isMainMenuSlotDisabled() ? Lang.OTHER_DISABLED.getString() : String.valueOf(shop.getMainMenuSlot()))
+        .add(VIRTUAL_SHOP_ALIASES, shop -> shop.getAliases().stream().map(str -> "/" + str).collect(Collectors.joining(", ")))
         .add(VIRTUAL_SHOP_DEFAULT_LAYOUT, VirtualShop::getDefaultLayout)
     );
 
@@ -508,6 +524,15 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
         .add(LISTING_ITEM_VALUE, listing -> String.valueOf(ItemNbt.compress(listing.getItemStack())))
         .add(LISTING_DELETES_IN, listing -> TimeUtil.formatDuration(listing.getDeleteDate()))
         .add(LISTING_DELETE_DATE, listing -> ShopUtils.getDateFormatter().format(TimeUtil.getLocalDateTimeOf(listing.getDeleteDate())))
+    );
+
+
+    public static final PlaceholderList<RentSettings> RENT_SETTINGS = PlaceholderList.create(list -> list
+        .add(RENT_ENABLED, rentSettings -> Lang.getYesOrNo(rentSettings.isEnabled()))
+        .add(RENT_CURRENCY, RentSettings::getCurrencyId)
+        .add(RENT_CURRENCY_NAME, RentSettings::getCurrencyName)
+        .add(RENT_PRICE, RentSettings::getPriceFormatted)
+        .add(RENT_DURATION, rentSettings -> TimeUtil.formatTime(rentSettings.getDurationMillis()))
     );
 
     public static final PlaceholderList<ActiveListing> ACTIVE_LISTING = PlaceholderList.create(list -> list

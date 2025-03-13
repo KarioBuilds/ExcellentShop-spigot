@@ -30,6 +30,12 @@ public class AuctionConfig {
         "You can use asterisk '" + Placeholders.WILDCARD + "' to allow all currencies."
     ).onRead(set -> Lists.modify(set, CurrencyId::reroute));
 
+    public static final ConfigValue<Set<String>> DISABLED_ITEM_HANDLERS = ConfigValue.create("Settings.Disabled_Item_Handlers",
+        Lists.newSet("mmoitems"),
+        "List of custom item handler IDs that should be ignored for auction listings and added as normal items.",
+        "https://nightexpressdev.com/economy-bridge/items/"
+    ).onRead(set -> Lists.modify(set, String::toLowerCase));
+
     public static final ConfigValue<Set<String>> DISABLED_WORLDS = ConfigValue.create("Settings.Disabled_Worlds",
         Lists.newSet("custom_world", "another_world"),
         "List of worlds where Auction can not be used.",
@@ -42,6 +48,16 @@ public class AuctionConfig {
         Lists.newSet(GameMode.CREATIVE),
         "Players can not add items to the Auction in the following gamemodes.",
         "https://hub.spigotmc.org/javadocs/spigot/org/bukkit/GameMode.html"
+    );
+
+    public static final ConfigValue<Boolean> NOTIFY_UNCLAIMED_ON_JOIN = ConfigValue.create("Settings.Notify_Unclaimed_On_Join",
+        true,
+        "When enabled, players will receive a message about unclaimed listings when they join the server."
+    );
+
+    public static final ConfigValue<Boolean> NOTIFY_EXPIRED_ON_JOIN = ConfigValue.create("Settings.Notify_Expired_On_Join",
+        true,
+        "When enabled, players will receive a message about expired listings when they join the server."
     );
 
     public static final ConfigValue<Boolean> LISTINGS_HIDE_ATTRIBUTES = ConfigValue.create("Settings.Listings.Hide_Attributes",
@@ -169,6 +185,11 @@ public class AuctionConfig {
             Material.DIAMOND_HELMET, Set.of(1002, 1016)
         ),
         "List of item's model data values to be disabled from adding in Auction."
+    );
+
+    public static final ConfigValue<Boolean> MENU_REOPEN_ON_PURCHASE = ConfigValue.create("Menu.ReOpen_On_Purchase",
+        true,
+        "Controls whether Auction GUI should re-open on purchase instead of closing."
     );
 
     public static final ConfigValue<Boolean> MENU_CONTAINER_PREVIEW_ENABLED = ConfigValue.create("Menu.Container_Preview.Enabled",

@@ -1,15 +1,15 @@
 package su.nightexpress.nexshop.api.shop.event;
 
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import su.nightexpress.economybridge.api.Currency;
+import su.nightexpress.nexshop.auction.listing.ActiveListing;
 
-public class ChestShopCreateEvent extends Event implements Cancellable {
+import org.jetbrains.annotations.NotNull;
+
+public class AuctionListingCreateEvent extends Event implements Cancellable {
 
     public static final HandlerList handlerList = new HandlerList();
 
@@ -24,19 +24,15 @@ public class ChestShopCreateEvent extends Event implements Cancellable {
     }
 
     private final Player player;
-    private final Block  block;
-    private final ItemStack item;
+    private final Currency currency;
+    private final ActiveListing listing;
 
     private boolean cancelled;
 
-    public ChestShopCreateEvent(@NotNull Player player, @NotNull Block block) {
-        this(player, block, null);
-    }
-
-    public ChestShopCreateEvent(@NotNull Player player, @NotNull Block block, @Nullable ItemStack item) {
+    public AuctionListingCreateEvent(@NotNull Player player, @NotNull Currency currency, @NotNull ActiveListing listing) {
         this.player = player;
-        this.block = block;
-        this.item = item;
+        this.currency = currency;
+        this.listing = listing;
     }
 
     @Override
@@ -54,16 +50,19 @@ public class ChestShopCreateEvent extends Event implements Cancellable {
         return player;
     }
 
+    /**
+     * @return Currency that was used for this listing.
+     */
     @NotNull
-    public Block getBlock() {
-        return block;
+    public Currency getCurrency() {
+        return currency;
     }
 
     /**
-     * @return Item used to create the shop.
+     * @return Listing that is about to be created.
      */
-    @Nullable
-    public ItemStack getItem() {
-        return item;
+    @NotNull
+    public ActiveListing getListing() {
+        return listing;
     }
 }
