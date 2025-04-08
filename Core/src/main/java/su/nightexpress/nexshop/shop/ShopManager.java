@@ -13,6 +13,7 @@ import su.nightexpress.nexshop.api.shop.type.ShopClickAction;
 import su.nightexpress.nexshop.api.shop.type.TradeType;
 import su.nightexpress.nexshop.config.Config;
 import su.nightexpress.nexshop.config.Lang;
+import su.nightexpress.nexshop.config.Perms;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
 import su.nightexpress.nexshop.shop.chest.impl.ChestShop;
 import su.nightexpress.nexshop.shop.menu.*;
@@ -50,6 +51,8 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
         this.loadCartUIs();
 
         this.addTask(this::updateShops, Config.SHOP_UPDATE_INTERVAL.get());
+
+        this.plugin.runTaskLater(task -> this.printBadProducts(), 100L);
     }
 
     @Override
@@ -79,7 +82,7 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
                 if (units == 0) return;
 
                 String type = config.getString("Content." + itemId + ".Type");
-                if (type == null) return;
+                if (type == null || type.isBlank()) return;
 
                 String result;
                 if (units > 1000 && type.equalsIgnoreCase("set")) result = "set_max";
@@ -120,6 +123,10 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
         this.getShops().forEach(Shop::update);
     }
 
+    private void printBadProducts() {
+        this.getShops().forEach(Shop::printBadProducts);
+    }
+
     @Nullable
     public CartMenu getCartUI(@NotNull String id) {
         return this.cartMenuMap.getOrDefault(id.toLowerCase(), this.cartMenuMap.get(Placeholders.DEFAULT));
@@ -135,6 +142,11 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
 
         ShopClickAction action = ShopUtils.getClickAction(player, clickType, shop, product);
         if (action == ShopClickAction.UNDEFINED) return;
+
+        if (action == ShopClickAction.SELL_ALL && !player.hasPermission(Perms.KEY_SELL_ALL)) {
+            Lang.ERROR_NO_PERMISSION.getMessage(this.plugin).send(player);
+            return;
+        }
 
         source.runNextTick(() -> this.startTrade(player, product, action, source));
     }
@@ -171,7 +183,7 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
             if (product.countUnits(player) < 1) {
                 Lang.SHOP_PRODUCT_ERROR_NOT_ENOUGH_ITEMS.getMessage().send(player, replacer -> replacer
                     .replace(Placeholders.GENERIC_AMOUNT, product.getUnitAmount())
-                    .replace(Placeholders.GENERIC_ITEM, ItemUtil.getItemName(product.getPreview()))
+                    .replace(Placeholders.GENERIC_ITEM, ItemUtil.getSerializedName(product.getPreview()))
                 );
                 return false;
             }

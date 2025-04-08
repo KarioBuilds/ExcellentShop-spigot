@@ -11,6 +11,10 @@ softdepend:
   - Kingdoms
   - AdvancedRegionMarket
   - GriefPrevention
+  - HuskClaims
+  - PlaceholderAPI
+  - ProtocolLib
+  - packetevents
   - Oraxen
   - ItemsAdder
   - Nexo
@@ -18,7 +22,4 @@ softdepend:
   - SCore
   - MMOItems
   - ExcellentCrates
-  - PlaceholderAPI
-  - ProtocolLib
-  - packetevents
 api-version: 1.18
