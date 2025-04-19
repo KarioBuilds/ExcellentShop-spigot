@@ -48,6 +48,21 @@
             <url>https://repo.william278.net/releases</url>
         </repository>
 
+        <repository>
+            <id>griefdefender</id>
+            <url>https://repo.glaremasters.me/repository/bloodshot</url>
+        </repository>
+
+        <repository>
+            <id>sonatype-oss-snapshots1</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+
+        <repository>
+            <id>alex9849</id>
+            <url>https://nexus.alex9849.net/repository/maven-releases/</url>
+        </repository>
+
     </repositories>
 
     <dependencies>
