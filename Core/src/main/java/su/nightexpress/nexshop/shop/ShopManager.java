@@ -20,7 +20,8 @@ import su.nightexpress.nexshop.shop.menu.*;
 import su.nightexpress.nexshop.shop.virtual.VirtualShopModule;
 import su.nightexpress.nexshop.util.ShopUtils;
 import su.nightexpress.nightcore.config.FileConfig;
-import su.nightexpress.nightcore.language.entry.LangText;
+import su.nightexpress.nightcore.core.config.CoreLang;
+import su.nightexpress.nightcore.locale.entry.MessageLocale;
 import su.nightexpress.nightcore.manager.AbstractManager;
 import su.nightexpress.nightcore.ui.menu.Menu;
 import su.nightexpress.nightcore.ui.menu.MenuRegistry;
@@ -118,9 +119,10 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
     }
 
     public void updateShops() {
-        if (!this.plugin.getDataManager().isLoaded()) return;
-
-        this.getShops().forEach(Shop::update);
+        this.getShops().forEach(shop -> {
+            shop.update();
+            shop.updatePrices(false);
+        });
     }
 
     private void printBadProducts() {
@@ -144,7 +146,7 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
         if (action == ShopClickAction.UNDEFINED) return;
 
         if (action == ShopClickAction.SELL_ALL && !player.hasPermission(Perms.KEY_SELL_ALL)) {
-            Lang.ERROR_NO_PERMISSION.getMessage(this.plugin).send(player);
+            CoreLang.ERROR_NO_PERMISSION.withPrefix(this.plugin).send(player);
             return;
         }
 
@@ -167,23 +169,23 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
 
         if (tradeType == TradeType.BUY) {
             if (!product.isBuyable()) {
-                Lang.SHOP_PRODUCT_ERROR_UNBUYABLE.getMessage().send(player);
+                Lang.SHOP_PRODUCT_ERROR_UNBUYABLE.message().send(player);
                 return false;
             }
             if (!Config.GENERAL_BUY_WITH_FULL_INVENTORY.get() && !product.hasSpace(player)) {
-                Lang.SHOP_PRODUCT_ERROR_FULL_INVENTORY.getMessage().send(player);
+                Lang.SHOP_PRODUCT_ERROR_FULL_INVENTORY.message().send(player);
                 return false;
             }
         }
         else if (tradeType == TradeType.SELL) {
             if (!product.isSellable()) {
-                Lang.SHOP_PRODUCT_ERROR_UNSELLABLE.getMessage().send(player);
+                Lang.SHOP_PRODUCT_ERROR_UNSELLABLE.message().send(player);
                 return false;
             }
             if (product.countUnits(player) < 1) {
-                Lang.SHOP_PRODUCT_ERROR_NOT_ENOUGH_ITEMS.getMessage().send(player, replacer -> replacer
+                Lang.SHOP_PRODUCT_ERROR_NOT_ENOUGH_ITEMS.message().send(player, replacer -> replacer
                     .replace(Placeholders.GENERIC_AMOUNT, product.getUnitAmount())
-                    .replace(Placeholders.GENERIC_ITEM, ItemUtil.getNameSerialized(product.getPreview()))
+                    .replace(Placeholders.GENERIC_ITEM, ItemUtil.getNameSerialized(product.getPreviewOrPlaceholder()))
                 );
                 return false;
             }
@@ -193,7 +195,7 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
         // For Chest Shop will return inventory space or item amount.
         int canPurchase = product.getAvailableAmount(player, tradeType);
         if (canPurchase == 0) {
-            LangText msgStock;
+            MessageLocale msgStock;
             if (tradeType == TradeType.BUY) {
                 msgStock = Lang.SHOP_PRODUCT_ERROR_OUT_OF_STOCK;
             }
@@ -203,7 +205,7 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
                 }
                 else msgStock = Lang.SHOP_PRODUCT_ERROR_FULL_STOCK;
             }
-            msgStock.getMessage().send(player);
+            msgStock.message().send(player);
             return false;
         }
 
@@ -230,7 +232,7 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
 
         CartMenu cartMenu = this.getCartUI(product.getShop().getModule().getDefaultCartUI(product.getTradeType()));
         if (cartMenu == null) {
-            Lang.SHOP_PRODUCT_ERROR_INVALID_CART_UI.getMessage().send(player);
+            Lang.SHOP_PRODUCT_ERROR_INVALID_CART_UI.message().send(player);
             return false;
         }
 
@@ -245,6 +247,7 @@ public class ShopManager extends AbstractManager<ShopPlugin> {
         this.purchaseOptionMenu.open(player, new Breadcumb<>(product, page));
     }
 
+    @Deprecated
     public void openConfirmation(@NotNull Player player, @NotNull Confirmation confirmation) {
         this.confirmMenu.open(player, confirmation);
     }

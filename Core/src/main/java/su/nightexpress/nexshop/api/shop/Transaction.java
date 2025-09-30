@@ -2,13 +2,13 @@ package su.nightexpress.nexshop.api.shop;
 
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.economybridge.api.Currency;
 import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nexshop.api.shop.product.Product;
 import su.nightexpress.nexshop.api.shop.type.TradeType;
 import su.nightexpress.nexshop.config.Lang;
 import su.nightexpress.nexshop.util.UnitUtils;
-import su.nightexpress.nightcore.language.entry.LangText;
+import su.nightexpress.nightcore.bridge.currency.Currency;
+import su.nightexpress.nightcore.locale.entry.MessageLocale;
 
 import java.util.function.UnaryOperator;
 
@@ -38,7 +38,7 @@ public class Transaction {
     }
 
     public void sendError(@NotNull Player player) {
-        LangText text = switch (this.result) {
+        MessageLocale text = switch (this.result) {
             case TOO_EXPENSIVE -> Lang.SHOP_PRODUCT_ERROR_TOO_EXPENSIVE;
             case NOT_ENOUGH_ITEMS -> Lang.SHOP_PRODUCT_ERROR_NOT_ENOUGH_ITEMS;
             case OUT_OF_STOCK -> Lang.SHOP_PRODUCT_ERROR_OUT_OF_STOCK;
@@ -48,7 +48,7 @@ public class Transaction {
         };
         if (text == null) return;
 
-        text.getMessage().send(player, replacer -> replacer.replace(this.replacePlaceholders()));
+        text.message().send(player, replacer -> replacer.replace(this.replacePlaceholders()));
     }
 
     @NotNull

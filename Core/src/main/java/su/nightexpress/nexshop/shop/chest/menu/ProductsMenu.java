@@ -10,10 +10,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nightexpress.economybridge.api.Currency;
 import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.nexshop.api.shop.type.TradeType;
 import su.nightexpress.nexshop.config.Lang;
+import su.nightexpress.nexshop.product.price.ProductPricing;
+import su.nightexpress.nexshop.product.price.impl.FlatPricing;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
 import su.nightexpress.nexshop.shop.chest.ChestUtils;
 import su.nightexpress.nexshop.shop.chest.config.ChestLang;
@@ -21,10 +22,13 @@ import su.nightexpress.nexshop.shop.chest.config.ChestPerms;
 import su.nightexpress.nexshop.shop.chest.impl.ChestProduct;
 import su.nightexpress.nexshop.shop.chest.impl.ChestShop;
 import su.nightexpress.nexshop.shop.impl.AbstractProduct;
+import su.nightexpress.nexshop.shop.menu.CartMenu;
+import su.nightexpress.nightcore.bridge.currency.Currency;
 import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.ui.UIUtils;
 import su.nightexpress.nightcore.ui.dialog.Dialog;
+import su.nightexpress.nightcore.ui.menu.MenuRegistry;
 import su.nightexpress.nightcore.ui.menu.MenuViewer;
 import su.nightexpress.nightcore.ui.menu.click.ClickResult;
 import su.nightexpress.nightcore.ui.menu.confirmation.Confirmation;
@@ -75,7 +79,16 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
     }
 
     public void open(@NotNull Player player, @NotNull ChestShop shop) {
-        this.open(player, shop, null, -1);
+        ChestProduct product = null;
+        int index = -1;
+
+        List<ChestProduct> products = new ArrayList<>(shop.getProducts());
+        if (!products.isEmpty()) {
+            product = products.getFirst();
+            index = 0;
+        }
+
+        this.open(player, shop, product, index);
     }
 
     private void open(@NotNull Player player, @NotNull ChestShop shop, @Nullable ChestProduct product, int index) {
@@ -92,7 +105,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
             .setSlots(this.productSlots)
             .setItems(shop.getProducts())
             .setItemCreator(product -> {
-                return NightItem.fromItemStack(product.getPreview());
+                return NightItem.fromItemStack(product.getPreviewOrPlaceholder());
             })
             .setItemClick(product -> (viewer1, event) -> {
                 int index = Lists.indexOf(this.productSlots, event.getRawSlot());
@@ -186,11 +199,24 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
         ChestShop shop = data.shop;
         ChestProduct product = data.product;
 
-        this.handleInput(Dialog.builder(viewer, Lang.EDITOR_PRODUCT_ENTER_PRICE, input -> {
-            product.setPrice(tradeType, input.asDoubleAbs());
+        this.handleInput(Dialog.builder(viewer, Lang.EDITOR_PRODUCT_ENTER_PRICE.text(), input -> {
+            if (product.getPricing() instanceof FlatPricing pricing) {
+                pricing.setPrice(tradeType, input.asDoubleAbs());
+                product.updatePrice(false);
+            }
             shop.setSaveRequired(true);
+            this.updateCartGUI(product);
             return true;
         }));
+    }
+
+    // Force update cart GUI when there is price changes. (Added by request)
+    private void updateCartGUI(@NotNull ChestProduct product) {
+        MenuRegistry.getViewers().forEach(viewer -> {
+            if (viewer.getMenu() instanceof CartMenu cartMenu && cartMenu.getLink(viewer).source().getProduct() == product) {
+                cartMenu.flush(viewer);
+            }
+        });
     }
 
     private void handlePriceOff(@NotNull MenuViewer viewer, @NotNull TradeType tradeType) {
@@ -200,8 +226,12 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
         ChestShop shop = data.shop;
         ChestProduct product = data.product;
 
-        product.setPrice(tradeType, -1D);
+        if (product.getPricing() instanceof FlatPricing pricing) {
+            pricing.setPrice(tradeType, ProductPricing.DISABLED);
+            product.updatePrice(false);
+        }
         shop.setSaveRequired(true);
+        this.module.getDisplayManager().remake(shop); // Remake due to hologram size changes.
 
         this.runNextTick(() -> this.flush(viewer));
     }
@@ -219,7 +249,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
         int index = currencies.indexOf(product.getCurrency()) + 1;
         if (index >= currencies.size()) index = 0;
 
-        product.setCurrency(currencies.get(index));
+        product.setCurrencyId(currencies.get(index).getInternalId());
         shop.setSaveRequired(true);
 
         this.runNextTick(() -> this.flush(viewer));
@@ -243,7 +273,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
             int amount = input.asIntAbs();
             this.module.depositToShop(player, product, amount);
             return true;
-        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT));
+        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT.text()));
     }
 
     private void handleWithdraw(@NotNull MenuViewer viewer, boolean all) {
@@ -262,7 +292,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
             int amount = input.asIntAbs();
             this.module.withdrawFromShop(player, product, amount);
             return true;
-        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT));
+        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT.text()));
     }
 
     private void handleRemove(@NotNull MenuViewer viewer) {
@@ -273,7 +303,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
         ChestProduct product = data.product;
 
         if (product.countStock(TradeType.BUY, null) > 0) {
-            ChestLang.EDITOR_ERROR_PRODUCT_LEFT.getMessage().send(player);
+            ChestLang.EDITOR_ERROR_PRODUCT_LEFT.message().send(player);
             return;
         }
 

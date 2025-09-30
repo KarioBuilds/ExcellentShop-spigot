@@ -7,8 +7,8 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.MenuType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nightexpress.economybridge.Placeholders;
-import su.nightexpress.economybridge.api.Currency;
+import su.nightexpress.nexshop.Placeholders;
+import su.nightexpress.nightcore.bridge.currency.Currency;
 import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.nexshop.config.Lang;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
@@ -158,7 +158,7 @@ public class BankMenu extends LinkedMenu<ShopPlugin, BankMenu.Data> implements F
             double amount = input.asDoubleAbs();
             this.module.depositToBank(player, holder, currency, amount);
             return true;
-        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT));
+        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT.text()));
     }
 
     private void handleWithdraw(@NotNull MenuViewer viewer, boolean all) {
@@ -180,7 +180,7 @@ public class BankMenu extends LinkedMenu<ShopPlugin, BankMenu.Data> implements F
             double amount = input.asDoubleAbs();
             this.module.withdrawFromBank(player, holder, currency, amount);
             return true;
-        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT));
+        }).setPrompt(Lang.EDITOR_GENERIC_ENTER_AMOUNT.text()));
     }
 
     @Override

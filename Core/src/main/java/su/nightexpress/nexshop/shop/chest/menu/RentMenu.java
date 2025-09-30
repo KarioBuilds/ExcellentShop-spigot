@@ -6,7 +6,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.MenuType;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.economybridge.api.Currency;
+import su.nightexpress.nightcore.bridge.currency.Currency;
 import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.nexshop.shop.chest.ChestShopModule;
 import su.nightexpress.nexshop.shop.chest.config.ChestLang;
@@ -70,7 +70,7 @@ public class RentMenu extends LinkedMenu<ShopPlugin, ChestShop> implements Confi
 
     private void handleDuration(@NotNull MenuViewer viewer) {
         ChestShop shop = this.getLink(viewer);
-        this.handleInput(Dialog.builder(viewer, ChestLang.RENT_PROMPT_DURATION, input -> {
+        this.handleInput(Dialog.builder(viewer, ChestLang.RENT_PROMPT_DURATION.text(), input -> {
             int days = input.asInt(1);
             shop.getRentSettings().setDuration(days, true);
             shop.setSaveRequired(true);
@@ -80,7 +80,7 @@ public class RentMenu extends LinkedMenu<ShopPlugin, ChestShop> implements Confi
 
     private void handlePrice(@NotNull MenuViewer viewer) {
         ChestShop shop = this.getLink(viewer);
-        this.handleInput(Dialog.builder(viewer, ChestLang.RENT_PROMPT_PRICE, input -> {
+        this.handleInput(Dialog.builder(viewer, ChestLang.RENT_PROMPT_PRICE.text(), input -> {
             double price = input.asDoubleAbs(0D);
             shop.getRentSettings().setPrice(price, true);
             shop.setSaveRequired(true);

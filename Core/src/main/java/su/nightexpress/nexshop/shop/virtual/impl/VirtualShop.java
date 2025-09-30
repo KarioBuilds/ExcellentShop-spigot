@@ -1,77 +1,53 @@
 package su.nightexpress.nexshop.shop.virtual.impl;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nightexpress.economybridge.EconomyBridge;
-import su.nightexpress.economybridge.api.Currency;
-import su.nightexpress.economybridge.currency.CurrencyId;
 import su.nightexpress.nexshop.Placeholders;
 import su.nightexpress.nexshop.ShopPlugin;
 import su.nightexpress.nexshop.api.shop.Transaction;
 import su.nightexpress.nexshop.api.shop.event.ShopTransactionEvent;
 import su.nightexpress.nexshop.api.shop.product.Product;
-import su.nightexpress.nexshop.api.shop.product.ProductType;
-import su.nightexpress.nexshop.api.shop.product.typing.PhysicalTyping;
-import su.nightexpress.nexshop.api.shop.product.typing.ProductTyping;
 import su.nightexpress.nexshop.api.shop.type.TradeType;
-import su.nightexpress.nexshop.config.Lang;
 import su.nightexpress.nexshop.data.shop.RotationData;
-import su.nightexpress.nexshop.product.type.ProductTypes;
+import su.nightexpress.nexshop.exception.ProductLoadException;
+import su.nightexpress.nexshop.exception.ShopLoadException;
+import su.nightexpress.nexshop.product.content.ContentType;
+import su.nightexpress.nexshop.product.content.ContentTypes;
+import su.nightexpress.nexshop.product.content.ProductContent;
+import su.nightexpress.nexshop.product.content.impl.CommandContent;
+import su.nightexpress.nexshop.product.content.impl.EmptyContent;
+import su.nightexpress.nexshop.product.content.impl.ItemContent;
 import su.nightexpress.nexshop.shop.impl.AbstractShop;
 import su.nightexpress.nexshop.shop.virtual.VirtualShopModule;
-import su.nightexpress.nexshop.shop.virtual.config.VirtualLang;
 import su.nightexpress.nexshop.shop.virtual.config.VirtualPerms;
+import su.nightexpress.nexshop.shop.virtual.lang.VirtualLang;
 import su.nightexpress.nexshop.util.ShopUtils;
-import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.config.FileConfig;
-import su.nightexpress.nightcore.util.NumberUtil;
+import su.nightexpress.nightcore.core.config.CoreLang;
 import su.nightexpress.nightcore.util.Players;
-import su.nightexpress.nightcore.util.StringUtil;
 import su.nightexpress.nightcore.util.bukkit.NightItem;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 public class VirtualShop extends AbstractShop<VirtualProduct> {
 
-    public static final String FILE_NAME     = "config.yml";
-    public static final String FILE_PRODUCTS = "products.yml";
-
     private final VirtualShopModule     module;
-    private final FileConfig            configProducts;
+    private final ShopSettings          settings;
     private final Set<Discount>         discounts;
-    private final Map<Integer, String>  pageLayouts;
     private final Map<String, Rotation> rotationByIdMap;
-
-    private Set<String>  aliases;
-    private List<String> description;
-    private boolean      permissionRequired;
-    private NightItem    icon;
-    private int          mainMenuSlot;
-    private String       layoutName;
-    private int          pages;
 
     public VirtualShop(@NotNull ShopPlugin plugin, @NotNull VirtualShopModule module, @NotNull File file, @NotNull String id) {
         super(plugin, file, id);
         this.module = module;
-
-        this.setName(StringUtil.capitalizeUnderscored(id));
-        this.setDescription(new ArrayList<>());
-        this.setIcon(NightItem.fromType(Material.CHEST));
-        this.setDefaultLayout(Placeholders.DEFAULT);
-        this.setPages(1);
-        this.setAliases(new HashSet<>());
-        this.configProducts = new FileConfig(this.getFile().getParentFile().getAbsolutePath(), FILE_PRODUCTS);
+        this.settings = new ShopSettings();
         this.discounts = new HashSet<>();
-        this.pageLayouts = new HashMap<>();
         this.rotationByIdMap = new HashMap<>();
-        this.mainMenuSlot = -1;
     }
 
     @Override
@@ -80,171 +56,80 @@ public class VirtualShop extends AbstractShop<VirtualProduct> {
         return Placeholders.forVirtualShop(this);
     }
 
-    @Override
-    protected boolean onLoad(@NotNull FileConfig config) {
-        this.setName(config.getString("Name", StringUtil.capitalizeUnderscored(this.getId())));
-        this.setDescription(config.getStringList("Description"));
-        this.setPermissionRequired(config.getBoolean("Permission_Required", false));
-        this.setIcon(config.getCosmeticItem("Icon"));
-        this.setMainMenuSlot(config.getInt("MainMenu.Slot", -1));
-        this.setPages(config.getInt("Pages", 1));
-        this.setAliases(config.getStringSet("Aliases"));
-
-        this.setDefaultLayout(ConfigValue.create("Layout.Name", Placeholders.DEFAULT).read(config));
-        config.getSection("Layout.ByPage").forEach(sId -> {
-            int page = NumberUtil.getIntegerAbs(sId, -1);
-            if (page < 0) return;
-
-            this.pageLayouts.put(page, config.getString("Layout.ByPage." + sId, Placeholders.DEFAULT));
-        });
-
-        this.setBuyingAllowed(config.getBoolean("Transaction_Allowed.BUY", true));
-        this.setSellingAllowed(config.getBoolean("Transaction_Allowed.SELL", true));
-
-        this.loadProducts();
-        this.loadRotations(config);
-
-        return true;
-    }
-
-    @Override
-    protected void onSave(@NotNull FileConfig config) {
-        this.writeSettings(config);
-        this.writeRotations(config);
-        this.saveProducts();
-    }
-
-    @Override
-    public void saveSettings() {
-        this.writeSection(this::writeSettings);
-    }
-
-    @Override
-    public void saveRotations() {
-        this.writeSection(this::writeRotations);
-    }
-
-    private void writeSection(@NotNull Consumer<FileConfig> consumer) {
+    public void load() throws ShopLoadException {
         FileConfig config = this.getConfig();
-        consumer.accept(config);
+
+        this.loadSettings(config, "Settings");
+        this.loadProducts(config, "Items");
+        this.loadRotations(config, "Rotations");
+
         config.saveChanges();
     }
 
-    private void writeSettings(@NotNull FileConfig config) {
-
-        config.set("Name", this.name);
-        config.set("Description", this.description);
-        config.set("Icon", this.icon);
-        config.set("Pages", this.pages);
-        config.set("Permission_Required", this.permissionRequired);
-        config.set("Transaction_Allowed.BUY", this.buyingAllowed);
-        config.set("Transaction_Allowed.SELL", this.sellingAllowed);
-        config.set("MainMenu.Slot", this.mainMenuSlot);
-        config.set("Aliases", this.aliases);
-        config.set("Layout.Name", this.layoutName);
-        config.remove("Layout.ByPage");
-        this.pageLayouts.forEach((page, lName) -> config.set("Layout.ByPage." + page, lName));
-    }
-
-    private void writeRotations(@NotNull FileConfig config) {
-        config.remove("Rotations");
-        this.rotationByIdMap.forEach((id, rotation) -> config.set("Rotations." + id, rotation));
+    @Override
+    public void save() {
+        this.save(true);
     }
 
     @Override
-    public void saveProducts() {
-        this.configProducts.remove("List");
+    public void save(boolean force) {
+        this.save(this.getConfig(), force);
+    }
 
-        this.getValidProducts().stream()
+    @Override
+    public void save(@NotNull FileConfig config, boolean force) {
+        if (force || this.isSaveRequired()) {
+            config.set("Settings", this.settings);
+
+            // Clean up from removed products/rotations.
+            config.getSection("Items").stream().filter(sId -> !this.hasProduct(sId)).forEach(sId -> {
+                config.remove("Items." + sId);
+            });
+            config.getSection("Rotations").stream().filter(sId -> !this.hasRotation(sId)).forEach(sId -> {
+                config.remove("Rotations." + sId);
+            });
+
+            this.setSaveRequired(false);
+        }
+
+        this.getProducts().stream().filter(product -> force || product.isSaveRequired())
             .sorted(Comparator.comparingInt(VirtualProduct::getPage).thenComparingInt(VirtualProduct::getSlot))
-            .forEach(this::writeProduct);
+            .peek(product -> product.setSaveRequired(false))
+            .forEach(product -> config.set("Items." + product.getId(), product));
 
-        this.configProducts.saveChanges();
+        this.getRotations().stream().filter(rotation -> force || rotation.isSaveRequired())
+            .peek(rotation -> rotation.setSaveRequired(false))
+            .forEach(rotation -> config.set("Rotations." + rotation.getId(), rotation));
+
+        config.saveChanges();
     }
 
-    @Override
-    @Deprecated
-    public void saveProduct(@NotNull Product product) {
-        VirtualProduct virtualProduct = this.getProductById(product.getId());
-        if (virtualProduct == null) return;
-
-        this.saveProduct(virtualProduct);
+    public void loadSettings(@NotNull FileConfig config, @NotNull String path) {
+        this.settings.load(config, path);
     }
 
-    public void saveProduct(@NotNull VirtualProduct product) {
-        this.writeProduct(product);
-        this.configProducts.saveChanges();
-    }
+    public void loadProducts(@NotNull FileConfig config, @NotNull String path) {
+        config.getSection(path).forEach(productId -> {
+            try {
+                VirtualProduct product = new VirtualProduct(productId, this);
+                product.load(config, path + "." + productId);
 
-    private void writeProduct(@NotNull VirtualProduct product) {
-        this.configProducts.set("List." + product.getId(), product);
-    }
-
-    private void loadProducts() {
-        this.products.clear();
-        this.configProducts.reload();
-        this.configProducts.getSection("List").forEach(productId -> {
-            VirtualProduct product = this.loadProduct(this.configProducts, "List." + productId, productId);
-            if (product == null) {
-                this.module.warn("Product not loaded: '" + productId + "' in '" + this.getId() + "' shop.");
-                return;
+                this.addProduct(product);
             }
-            this.addProduct(product);
+            catch (ProductLoadException exception) {
+                if (exception.isFatal()) exception.printStackTrace();
+                this.module.error("Product '" + productId + "' in '" + this.getId() + "' shop not loaded.");
+            }
         });
-        this.configProducts.saveChanges();
     }
 
-    private void loadRotations(@NotNull FileConfig config) {
-        config.getSection("Rotations").forEach(sId -> {
-            String path = "Rotations." + sId;
-
+    public void loadRotations(@NotNull FileConfig config, @NotNull String path) {
+        config.getSection(path).forEach(sId -> {
             Rotation rotation = new Rotation(sId, this);
-            rotation.load(config, path);
+            rotation.load(config, path + "." + sId);
 
             this.addRotation(rotation);
         });
-    }
-
-    @NotNull
-    @Deprecated
-    public VirtualProduct createProduct(@NotNull Currency currency, @NotNull ProductTyping typing) {
-        return new VirtualProduct(ShopUtils.generateProductId(this, typing), this, currency, typing);
-    }
-
-    @Nullable
-    protected VirtualProduct loadProduct(@NotNull FileConfig config, @NotNull String path, @NotNull String id) {
-        String currencyId = CurrencyId.reroute(config.getString(path + ".Currency", CurrencyId.VAULT));
-        Currency currency = EconomyBridge.getCurrencyOrDummy(currencyId);
-        if (currency.isDummy()) {
-            this.module.warn("Invalid currency '" + currencyId + "' for '" + id + "' product in '" + this.getId() + "' shop. Install missing plugin or change currency in editor.");
-        }
-
-        // Legacy stuff
-        if (!config.contains(path + ".Handler")) {
-            config.set(path + ".Handler", "bukkit_item");
-        }
-        // Legacy end
-
-        if (!config.contains(path + ".Type")) {
-            String handlerId = config.getString(path + ".Handler", "bukkit_item");
-            if (handlerId.equalsIgnoreCase("bukkit_command")) {
-                config.set(path + ".Type", ProductType.COMMAND.name());
-            }
-            else if (handlerId.equalsIgnoreCase("bukkit_item")) {
-                config.set(path + ".Type", ProductType.VANILLA.name());
-            }
-            else {
-                config.set(path + ".Type", ProductType.PLUGIN.name());
-            }
-        }
-
-        ProductType type = config.getEnum(path + ".Type", ProductType.class, ProductType.VANILLA);
-        ProductTyping typing = ProductTypes.read(type, config, path);
-
-        VirtualProduct product = new VirtualProduct(id, this, currency, typing);
-        product.load(config, path);
-
-        return product;
     }
 
     @Override
@@ -253,6 +138,22 @@ public class VirtualShop extends AbstractShop<VirtualProduct> {
         this.getRotations().forEach(rotation -> rotation.getItemMap().remove(id.toLowerCase()));
 
         super.removeProduct(id);
+    }
+
+    @NotNull
+    public VirtualProduct createProduct(@NotNull ContentType type, @NotNull ItemStack itemStack) {
+        ProductContent content = switch (type) {
+            case ITEM -> ContentTypes.fromItem(itemStack, this.module::isItemProviderAllowed);
+            case COMMAND -> new CommandContent(itemStack, new ArrayList<>());
+            case EMPTY -> EmptyContent.VALUE;
+        };
+
+        String id = ShopUtils.generateProductId(this, content);
+        VirtualProduct product = new VirtualProduct(id, this);
+
+        product.setCurrencyId(this.module.getSettings().getDefaultCurrency());
+        product.setContent(content);
+        return product;
     }
 
     @Nullable
@@ -269,7 +170,7 @@ public class VirtualShop extends AbstractShop<VirtualProduct> {
 
         this.getValidProducts().forEach(product -> {
             if (!product.isTradeable(tradeType)) return;
-            if (!(product.getType() instanceof PhysicalTyping typing)) return;
+            if (!(product.getContent() instanceof ItemContent typing)) return;
             if (!typing.isItemMatches(itemStack)) return;
             if (stackSize < product.getUnitAmount()) return;
             if (product.isRotating() && !product.isInRotation()) return;
@@ -311,63 +212,53 @@ public class VirtualShop extends AbstractShop<VirtualProduct> {
 //        });
     }
 
-    public boolean isDataLoaded() {
-        return this.plugin.getDataManager().isLoaded();
-    }
-
-    @NotNull
-    private RotationData getRotationData(@NotNull Rotation rotation) {
-        return this.plugin.getDataManager().getRotationDataOrCreate(rotation);
-    }
-
     public void performRotation() {
-        if (!this.isDataLoaded()) return;
-
         this.getRotations().forEach(this::performRotation);
     }
 
     public void performRotation(@NotNull Rotation rotation) {
-        if (!this.isDataLoaded()) return;
+        this.plugin.dataAccess(dataManager -> {
+            RotationData data = dataManager.getRotationDataOrCreate(rotation);
 
-        RotationData data = this.getRotationData(rotation);
+            data.setNextRotationDate(rotation.createNextRotationTimestamp());
+            data.setProducts(rotation.generateRotationProducts());
+            data.setSaveRequired(true);
 
-        data.setNextRotationDate(rotation.createNextRotationTimestamp());
-        data.setProducts(rotation.generateRotationProducts());
-        data.setSaveRequired(true);
+            Set<Product> products = new HashSet<>();
+            data.getProducts().values().forEach(productIds -> {
+                products.addAll(productIds.stream().map(this::getProductById).filter(Objects::nonNull).toList());
+            });
 
-        Set<Product> products = new HashSet<>();
-        data.getProducts().values().forEach(productIds -> {
-            products.addAll(productIds.stream().map(this::getProductById).filter(Objects::nonNull).toList());
+            // Reset price & stock datas (mark all as 'expired').
+            // It's useful when those products has dynamic/float prices and stock values.
+            // So we start from scratch on each rotation.
+            dataManager.resetPriceDatas(products);
+            dataManager.resetStockDatas(products);
         });
-
-        // Reset price & stock datas (mark all as 'expired').
-        // It's useful when those products has dynamic/float prices and stock values.
-        // So we start from scratch on each rotation.
-        this.plugin.getDataManager().resetPriceDatas(products);
-        this.plugin.getDataManager().resetStockDatas(products);
     }
 
     public boolean tryRotate() {
-        if (!this.isDataLoaded()) return false;
-
         AtomicInteger rotated = new AtomicInteger(0);
 
-        this.getRotations().forEach(rotation -> {
-            if (rotation.countItems() == 0) return;
-            if (rotation.countAllSlots() == 0) return;
+        this.plugin.dataAccess(dataManager -> {
+            this.getRotations().forEach(rotation -> {
+                if (rotation.countItems() == 0) return;
+                if (rotation.countAllSlots() == 0) return;
 
-            RotationData data = this.getRotationData(rotation);
-            if (!data.isRotationTime()) return;
+                RotationData data = dataManager.getRotationDataOrCreate(rotation);
+                if (!data.isRotationTime()) return;
 
-            this.performRotation(rotation);
-            rotated.addAndGet(rotation.countAllSlots());
+                this.performRotation(rotation);
+                rotated.addAndGet(rotation.countAllSlots());
+            });
         });
+
         if (rotated.get() == 0) return false;
 
         Players.getOnline().forEach(player -> {
             if (!this.canAccess(player, false)) return;
 
-            VirtualLang.SHOP_ROTATION_NOTIFY.getMessage().send(player, replacer -> replacer.replace(Placeholders.GENERIC_AMOUNT, rotated.get()).replace(this.replacePlaceholders()));
+            VirtualLang.SHOP_ROTATION_NOTIFY.message().send(player, replacer -> replacer.replace(Placeholders.GENERIC_AMOUNT, rotated.get()).replace(this.replacePlaceholders()));
         });
 
         return true;
@@ -381,15 +272,27 @@ public class VirtualShop extends AbstractShop<VirtualProduct> {
     @Override
     public boolean canAccess(@NotNull Player player, boolean notify) {
         if (!this.hasPermission(player)) {
-            if (notify) Lang.ERROR_NO_PERMISSION.getMessage(this.plugin).send(player);
+            if (notify) CoreLang.ERROR_NO_PERMISSION.withPrefix(this.plugin).send(player);
             return false;
         }
 
         return true;
     }
 
-    public boolean isMainMenuSlotDisabled() {
-        return this.mainMenuSlot < 0;
+    public boolean hasDescription() {
+        return !this.settings.getDescription().isEmpty();
+    }
+
+    public boolean hasAliases() {
+        return !this.settings.getAliases().isEmpty();
+    }
+
+    public boolean hasMenuSlots() {
+        return !this.settings.getMenuSlots().isEmpty();
+    }
+
+    public boolean isMenuSlot(int slot) {
+        return this.settings.getMenuSlots().contains(slot);
     }
 
     @NotNull
@@ -398,26 +301,37 @@ public class VirtualShop extends AbstractShop<VirtualProduct> {
     }
 
     @NotNull
-    public FileConfig getConfigProducts() {
-        return this.configProducts;
+    public Set<String> getAliases() {
+        return this.settings.getAliases();
     }
 
     @NotNull
-    public Set<String> getAliases() {
-        return this.aliases;
+    public Set<String> getSlashedAliases() {
+        return this.settings.getAliases().stream().map(s -> "/" + s).collect(Collectors.toSet());
     }
 
     public void setAliases(@NotNull Set<String> aliases) {
-        this.aliases = new HashSet<>(aliases);
+        this.settings.setAliases(aliases);
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+        return this.settings.getName();
+    }
+
+    @Override
+    public void setName(@NotNull String name) {
+        this.settings.setName(name);
     }
 
     @NotNull
     public List<String> getDescription() {
-        return this.description;
+        return this.settings.getDescription();
     }
 
     public void setDescription(@NotNull List<String> description) {
-        this.description = description;
+        this.settings.setDescription(description);
     }
 
     public boolean hasPermission(@NotNull Player player) {
@@ -427,57 +341,94 @@ public class VirtualShop extends AbstractShop<VirtualProduct> {
     }
 
     public boolean isPermissionRequired() {
-        return this.permissionRequired;
+        return this.settings.isPermissionRequired();
     }
 
     public void setPermissionRequired(boolean isPermissionRequired) {
-        this.permissionRequired = isPermissionRequired;
+        this.settings.setPermissionRequired(isPermissionRequired);
     }
 
     @NotNull
     public NightItem getIcon() {
-        return this.icon.copy();
+        return this.settings.getIcon();
     }
 
     public void setIcon(@NotNull NightItem icon) {
-        this.icon = icon.copy().setAmount(1);
+        this.settings.setIcon(icon);
     }
 
-    public int getMainMenuSlot() {
-        return this.mainMenuSlot;
+    @Override
+    public boolean isBuyingAllowed() {
+        return this.settings.isBuyingAllowed();
     }
 
-    public void setMainMenuSlot(int mainMenuSlot) {
-        this.mainMenuSlot = mainMenuSlot;
+    @Override
+    public void setBuyingAllowed(boolean buyingAllowed) {
+        this.settings.setBuyingAllowed(buyingAllowed);
     }
 
-    public int getPages() {
-        return this.pages;
+    @Override
+    public boolean isSellingAllowed() {
+        return this.settings.isSellingAllowed();
     }
 
-    public void setPages(int pages) {
-        this.pages = Math.max(1, pages);
+    @Override
+    public void setSellingAllowed(boolean sellingAllowed) {
+        this.settings.setSellingAllowed(sellingAllowed);
     }
 
     @NotNull
-    public String getDefaultLayout() {
-        return this.layoutName;
+    public Set<Integer> getMenuSlots() {
+        return this.settings.getMenuSlots();
     }
 
-    public void setDefaultLayout(@NotNull String layoutName) {
-        this.layoutName = layoutName.toLowerCase();
+    public void addMenuSlot(int slot) {
+        this.settings.getMenuSlots().add(slot);
+    }
+
+    public void removeMenuSlot(int slot) {
+        this.settings.getMenuSlots().remove(slot);
+    }
+
+    public void clearMenuSlots() {
+        this.settings.getMenuSlots().clear();
+    }
+
+    public void setMenuSlots(@NotNull Set<Integer> menuSlots) {
+        this.settings.setMenuSlots(menuSlots);
+    }
+
+    public int getPages() {
+        return this.settings.getPages();
+    }
+
+    public void setPages(int pages) {
+        this.settings.setPages(pages);
+    }
+
+    public boolean isPaginatedLayouts() {
+        return this.settings.isPaginatedLayouts();
+    }
+
+    public void setPaginatedLayouts(boolean paginatedLayouts) {
+        this.settings.setPaginatedLayouts(paginatedLayouts);
     }
 
     @NotNull
     public String getLayout(int page) {
-        return this.pageLayouts.getOrDefault(page, this.layoutName);
+        return this.settings.getLayout(page);
     }
 
-    public void setLayout(int page, @Nullable String layoutName) {
-        if (layoutName == null) {
-            this.pageLayouts.remove(page);
-        }
-        else this.pageLayouts.put(page, layoutName.toLowerCase());
+    public void setPageLayout(int page, @NotNull String layoutName) {
+        this.settings.setPageLayout(page, layoutName);
+    }
+
+    public void removePageLayout(int page) {
+        this.settings.removePageLayout(page);
+    }
+
+    public boolean hasRotation(@NotNull String id) {
+        return this.rotationByIdMap.containsKey(id);
     }
 
     public void addRotation(@NotNull Rotation rotation) {

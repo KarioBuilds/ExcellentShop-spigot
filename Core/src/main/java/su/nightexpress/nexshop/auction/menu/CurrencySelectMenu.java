@@ -5,9 +5,8 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.economybridge.Placeholders;
 import su.nightexpress.nexshop.ShopPlugin;
-import su.nightexpress.economybridge.api.Currency;
+import su.nightexpress.nightcore.bridge.currency.Currency;
 import su.nightexpress.nexshop.auction.AuctionManager;
 import su.nightexpress.nexshop.auction.AuctionUtils;
 import su.nightexpress.nexshop.config.Lang;
@@ -123,7 +122,8 @@ public class CurrencySelectMenu extends ConfigMenu<ShopPlugin> implements AutoFi
     protected List<MenuItem> createDefaultItems() {
         List<MenuItem> list = new ArrayList<>();
 
-        ItemStack backItem = ItemUtil.getSkinHead(SKIN_WRONG_MARK);
+        // TODO
+        /*ItemStack backItem = ItemUtil.getSkinHead(SKIN_WRONG_MARK);
         ItemUtil.editMeta(backItem, meta -> {
             meta.setDisplayName(LIGHT_RED.enclose(BOLD.enclose("Cancel")));
         });
@@ -139,7 +139,7 @@ public class CurrencySelectMenu extends ConfigMenu<ShopPlugin> implements AutoFi
         ItemUtil.editMeta(nextPage, meta -> {
             meta.setDisplayName(Lang.EDITOR_ITEM_NEXT_PAGE.getDefaultName());
         });
-        list.add(new MenuItem(nextPage).setSlots(17).setPriority(10).setHandler(ItemHandler.forNextPage(this)));
+        list.add(new MenuItem(nextPage).setSlots(17).setPriority(10).setHandler(ItemHandler.forNextPage(this)));*/
 
         return list;
     }
