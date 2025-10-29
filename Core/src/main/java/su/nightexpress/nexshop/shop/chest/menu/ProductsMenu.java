@@ -165,11 +165,18 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
         ItemStack item = result.getItemStack();
         if (item == null || item.getType().isAir()) return;
 
-        shop.createProduct(player, item, event.isShiftClick());
-        shop.setSaveRequired(true);
+        ChestProduct product = shop.createProduct(player, item, event.isShiftClick());
+        if (product == null) return;
+
+        shop.markDirty();
+        shop.updateStockCache();
         this.module.getDisplayManager().remake(shop);
 
-        this.runNextTick(() -> this.flush(viewer));
+        List<ChestProduct> products = new ArrayList<>(shop.getProducts());
+        int index = products.indexOf(product);
+        if (index < 0) return;
+
+        this.runNextTick(() -> this.open(player, shop, product, index));
     }
 
     @Override
@@ -204,7 +211,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
                 pricing.setPrice(tradeType, input.asDoubleAbs());
                 product.updatePrice(false);
             }
-            shop.setSaveRequired(true);
+            shop.markDirty();
             this.updateCartGUI(product);
             return true;
         }));
@@ -230,7 +237,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
             pricing.setPrice(tradeType, ProductPricing.DISABLED);
             product.updatePrice(false);
         }
-        shop.setSaveRequired(true);
+        shop.markDirty();
         this.module.getDisplayManager().remake(shop); // Remake due to hologram size changes.
 
         this.runNextTick(() -> this.flush(viewer));
@@ -250,7 +257,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
         if (index >= currencies.size()) index = 0;
 
         product.setCurrencyId(currencies.get(index).getInternalId());
-        shop.setSaveRequired(true);
+        shop.markDirty();
 
         this.runNextTick(() -> this.flush(viewer));
     }
@@ -310,7 +317,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
         UIUtils.openConfirmation(player, Confirmation.builder()
             .onAccept((viewer1, event) -> {
                 shop.removeProduct(product.getId());
-                shop.setSaveRequired(true);
+                shop.markDirty();
                 this.module.getDisplayManager().remake(shop);
                 this.runNextTick(() -> this.module.openProductsMenu(player, shop));
             })
