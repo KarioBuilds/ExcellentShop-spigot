@@ -115,6 +115,13 @@ public class ChestUtils {
 //        return !needShift || event.isShiftClick();
 //    }
 
+    public static double clampPrice(double price) {
+        double maxPrice = ChestConfig.PRODUCT_MAX_PRICE.get();
+        if (maxPrice < 0D) return price;
+
+        return Math.min(price, maxPrice);
+    }
+
     public static boolean isDye(@NotNull Material material) {
         return BukkitThing.getValue(material).endsWith("_dye");
     }

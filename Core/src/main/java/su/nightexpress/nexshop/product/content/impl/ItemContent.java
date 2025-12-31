@@ -1,5 +1,7 @@
 package su.nightexpress.nexshop.product.content.impl;
 
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +112,14 @@ public class ItemContent extends ProductContent {
 
     @Override
     public void delivery(@NotNull Inventory inventory, int count) {
-        ShopUtils.addItem(inventory, this.getItem(), UnitUtils.unitsToAmount(this.getUnitAmount(), count));
+        var result = ShopUtils.addItem(inventory, this.getItem(), UnitUtils.unitsToAmount(this.getUnitAmount(), count));
+        if (result.isEmpty()) return;
+
+        Location location = inventory.getLocation();
+        World world = location == null ? null : location.getWorld();
+        if (location != null && world != null) {
+            result.values().forEach(itemStack -> world.dropItemNaturally(location, itemStack));
+        }
     }
 
     @Override
@@ -125,7 +134,7 @@ public class ItemContent extends ProductContent {
 
     @Override
     public boolean hasSpace(@NotNull Inventory inventory) {
-        return this.countSpace(inventory) > 0;
+        return this.countSpace(inventory) >= this.getUnitAmount();
     }
 
     @Override

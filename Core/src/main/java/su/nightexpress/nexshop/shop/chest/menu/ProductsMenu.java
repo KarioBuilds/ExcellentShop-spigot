@@ -208,7 +208,7 @@ public class ProductsMenu extends LinkedMenu<ShopPlugin, ProductsMenu.Data> impl
 
         this.handleInput(Dialog.builder(viewer, Lang.EDITOR_PRODUCT_ENTER_PRICE.text(), input -> {
             if (product.getPricing() instanceof FlatPricing pricing) {
-                pricing.setPrice(tradeType, input.asDoubleAbs());
+                pricing.setPrice(tradeType, ChestUtils.clampPrice(input.asDoubleAbs()));
                 product.updatePrice(false);
             }
             shop.markDirty();

@@ -38,7 +38,10 @@ public class DynamicPricing extends ProductPricing {
         }
 
         public double clampOffset(double offset) {
-            return Math.clamp(offset, this.minOffset, this.maxOffset);
+            double min = Math.min(this.minOffset, this.maxOffset);
+            double max = Math.max(this.minOffset, this.maxOffset);
+
+            return Math.clamp(offset, min, max);
         }
 
         @NotNull

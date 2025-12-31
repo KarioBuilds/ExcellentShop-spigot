@@ -73,11 +73,11 @@ public class ChestShopCommands {
             .permission(ChestPerms.CREATE)
             .description(ChestLang.COMMAND_CREATE_DESC.text())
             .withArguments(
-                Arguments.decimalCompact(CommandArguments.BUY_PRICE)
+                Arguments.decimalCompact(CommandArguments.BUY_PRICE, -1, ChestConfig.PRODUCT_MAX_PRICE.get())
                     .optional()
                     .localized(ChestLang.COMMAND_ARGUMENT_NAME_BUY_PRICE.text())
                     .suggestions((reader, context) -> Lists.newList("100", "1000")),
-                Arguments.decimalCompact(CommandArguments.SELL_PRICE)
+                Arguments.decimalCompact(CommandArguments.SELL_PRICE, -1, ChestConfig.PRODUCT_MAX_PRICE.get())
                     .optional()
                     .localized(ChestLang.COMMAND_ARGUMENT_NAME_SELL_PRICE.text())
                     .suggestions((reader, context) -> Lists.newList("50", "500"))

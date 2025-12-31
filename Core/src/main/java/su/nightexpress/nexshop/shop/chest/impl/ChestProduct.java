@@ -157,6 +157,7 @@ public class ChestProduct extends AbstractProduct<ChestShop> {
 
     @Override
     public boolean storeStock(@NotNull TradeType type, int units, @Nullable UUID playerId) {
+        if (units <= 0) return false;
         if (this.shop.isInactive()) return false;
         if (!this.isValid()) return false;
         if (!(this.getContent() instanceof ItemContent itemContent)) return false;
@@ -172,12 +173,9 @@ public class ChestProduct extends AbstractProduct<ChestShop> {
         Inventory inventory = this.shop.inventory();
         if (inventory == null) return false; // Shop container is not valid anymore.
 
-        if (ShopUtils.addItem(inventory, itemContent.getItem(), amount)) {
-            this.updateStockCache();
-            return true;
-        }
-
-        return false;
+        ShopUtils.addItem(inventory, itemContent.getItem(), amount);
+        this.updateStockCache();
+        return true;
     }
 
     @Override

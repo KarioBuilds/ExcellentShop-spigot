@@ -1,8 +1,6 @@
 package su.nightexpress.nexshop.util;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
@@ -213,26 +211,13 @@ public class ShopUtils {
         Arrays.asList(items).forEach(item -> addItem(inventory, item, item.getAmount()));
     }
 
-    public static boolean addItem(@NotNull Inventory inventory, @NotNull ItemStack origin, int amount) {
-        if (amount <= 0 || origin.getType().isAir()) return false;
-        if (countItemSpace(inventory, origin) < amount) return false;
-
-        Location location = inventory.getLocation();
-        World world = location == null ? null : location.getWorld();
+    @NotNull
+    public static Map<Integer, ItemStack> addItem(@NotNull Inventory inventory, @NotNull ItemStack origin, int amount) {
+        if (amount <= 0 || origin.getType().isAir()) return Collections.emptyMap();
 
         ItemStack split = new ItemStack(origin);
+        split.setAmount(amount);
 
-        int splitAmount = Math.min(split.getMaxStackSize(), amount);
-        split.setAmount(splitAmount);
-        inventory.addItem(split).values().forEach(left -> {
-            if (world != null) {
-                world.dropItem(location, left);
-            }
-        });
-
-        amount -= splitAmount;
-        if (amount > 0) addItem(inventory, origin, amount);
-
-        return true;
+        return inventory.addItem(split);
     }
 }

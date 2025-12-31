@@ -86,7 +86,7 @@ public abstract class AbstractProduct<S extends AbstractShop<?>> implements Prod
 
     @Override
     public void setPrice(@NotNull TradeType type, double price) {
-        double floored = this.currency().map(currency -> currency.floorIfNeeded(price)).orElse(price);
+        double floored = price == ProductPricing.DISABLED ? price : this.currency().map(currency -> currency.floorIfNeeded(price)).orElse(price);
         switch (type) {
             case BUY -> this.setBuyPrice(floored);
             case SELL -> this.setSellPrice(floored);

@@ -112,7 +112,7 @@ public class ShopListener extends AbstractListener<ShopPlugin> {
 
     // TODO Update stock cache on container close
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onShopInteract(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
         if (block == null) return;
@@ -304,7 +304,7 @@ public class ShopListener extends AbstractListener<ShopPlugin> {
         if (event.isNewChunk()) return;
 
         Chunk chunk = event.getChunk();
-        this.module.lookup().getAll(chunk).forEach(this.module::onChunkLoad);
+        this.module.lookup().getAll(chunk).stream().filter(ChestShop::isActive).forEach(this.module::onChunkLoad);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
