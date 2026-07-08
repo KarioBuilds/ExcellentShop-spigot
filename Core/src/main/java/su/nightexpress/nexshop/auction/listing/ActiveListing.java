@@ -1,10 +1,10 @@
 package su.nightexpress.nexshop.auction.listing;
 
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
-import su.nightexpress.nexshop.Placeholders;
+import org.jspecify.annotations.NonNull;
+import su.nightexpress.excellentshop.ShopPlaceholders;
 import su.nightexpress.nexshop.auction.AuctionUtils;
-import su.nightexpress.nexshop.product.content.impl.ItemContent;
+import su.nightexpress.excellentshop.product.content.ItemContent;
 import su.nightexpress.nightcore.bridge.currency.Currency;
 
 import java.util.UUID;
@@ -14,9 +14,9 @@ public class ActiveListing extends AbstractListing {
 
     private final long expireDate;
 
-    public static ActiveListing create(@NotNull Player player,
-                                       @NotNull ItemContent typing,
-                                       @NotNull Currency currency,
+    public static ActiveListing create(@NonNull Player player,
+                                       @NonNull ItemContent typing,
+                                       @NonNull Currency currency,
                                        double price) {
         UUID id = UUID.randomUUID();
         UUID holder = player.getUniqueId();
@@ -29,11 +29,11 @@ public class ActiveListing extends AbstractListing {
         return new ActiveListing(id, holder, ownerName, typing, currency, price, creationDate, expirationDate, deletionDate);
     }
 
-    public ActiveListing(@NotNull UUID id,
-                         @NotNull UUID owner,
-                         @NotNull String ownerName,
-                         @NotNull ItemContent typing,
-                         @NotNull Currency currency,
+    public ActiveListing(@NonNull UUID id,
+                         @NonNull UUID owner,
+                         @NonNull String ownerName,
+                         @NonNull ItemContent typing,
+                         @NonNull Currency currency,
                          double price,
                          long creationDate,
                          long expireDate,
@@ -43,9 +43,9 @@ public class ActiveListing extends AbstractListing {
     }
 
     @Override
-    @NotNull
+    @NonNull
     public UnaryOperator<String> replacePlaceholders() {
-        return Placeholders.forActiveListing(this);
+        return ShopPlaceholders.forActiveListing(this);
     }
 
     public long getExpireDate() {
