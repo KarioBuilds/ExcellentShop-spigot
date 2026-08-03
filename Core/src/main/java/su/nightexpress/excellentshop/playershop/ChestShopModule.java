@@ -829,15 +829,17 @@ public class ChestShopModule extends AbstractShopModule implements PlayerShopMan
             return;
         }
 
-        if (shop.isEffectiveMerchant(player) || shop.isTrusted(player)) {
-            event.setUseInteractedBlock(Event.Result.DENY);
-            if (shop.isAdminShop() || ChestUtils.isInfiniteStorage()) {
-                this.openShopSettings(player, shop);
+        if (!shop.isAdminShop()) {
+            if (shop.isEffectiveMerchant(player) || shop.isTrusted(player)) {
+                event.setUseInteractedBlock(Event.Result.DENY);
+                if (ChestUtils.isInfiniteStorage()) {
+                    this.openShopSettings(player, shop);
+                }
+                else {
+                    shop.getInventory().ifPresent(player::openInventory);
+                }
+                return;
             }
-            else {
-                shop.getInventory().ifPresent(player::openInventory);
-            }
-            return;
         }
 
         event.setUseInteractedBlock(Event.Result.DENY);
@@ -905,14 +907,14 @@ public class ChestShopModule extends AbstractShopModule implements PlayerShopMan
 
         BlockData blockData = material.createBlockData();
         if (blockData instanceof Directional directional) {
-            if (blockData instanceof org.bukkit.block.data.type.Chest) {
+            if (directional.getFaces().contains(BlockFace.UP)) {
+                directional.setFacing(BlockFace.UP);
+            }
+            else {
                 BlockFace face = EntityUtil.getDirection(player);
                 if (face != null) {
                     directional.setFacing(face.getOppositeFace());
                 }
-            }
-            else {
-                directional.setFacing(BlockFace.UP);
             }
         }
 

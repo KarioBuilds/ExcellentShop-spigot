@@ -43,7 +43,7 @@ public class DataColumns {
     public static final Column<UUID>                   ROTATION_ID            = Column.uuidType("rotationId")
         .primaryKey().build();
     public static final Column<List<RotationItemData>> ROTATION_PRODUCTS      = Column.jsonList("items",
-        DataHandler.GSON, RotationItemData.class).defaultValue("[]").build();
+        DataHandler.GSON, RotationItemData.class).build();
     public static final Column<Long>                   ROTATION_NEXT_ROTATION = Column.longType("nextRotation").build();
 
     public static final Column<UUID>         USER_ID       = Column.uuidType("uuid").build();

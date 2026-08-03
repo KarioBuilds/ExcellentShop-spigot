@@ -16,7 +16,7 @@ public class FakeEntity {
 
     @NonNull
     public static FakeEntity create(@NonNull Location location) {
-        return new FakeEntity(EntityUtil.nextEntityId(), location);
+        return new FakeEntity(EntityUtil.nextEntityId(location.getWorld()), location);
     }
 
     public int getId() {
